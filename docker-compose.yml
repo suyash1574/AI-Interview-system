@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://autergo:autergo@db:5432/autergo
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=autergo
+      - POSTGRES_PASSWORD=autergo
+      - POSTGRES_DB=autergo
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"

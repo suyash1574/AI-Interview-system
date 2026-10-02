@@ -1,0 +1,12 @@
+/.agents
+/.kilo
+/.opencode
+/.specify
+.env
+.venv
+node_modules
+.node_modules
+__pycache__
+.ipynb_checkpoints
+/.venv
+/.claude

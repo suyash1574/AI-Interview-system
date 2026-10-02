@@ -1,1 +1,1 @@
-# AI-Interview-system
+# Autergo AI Interview System\n\nBase repository foundation.
