@@ -10,8 +10,4 @@ Date,Version,Feature ID,Description,Files Affected,Status
 2026-10-03,1.1.0,TASK-RTC-002,Realtime WebSocket interview engine with adaptive state transitions,backend/api/v1/realtime.py;tests/unit/test_realtime.py,COMPLETED
 2026-10-03,1.1.0,TASK-REP-001,Post-interview report generation and email dispatch service,backend/core/services/email.py;workers/tasks/reports.py;tests/unit/test_reports.py,COMPLETED
 2026-10-03,1.1.0,TASK-EVAL-002,Evaluations API with async background pipeline triggers,backend/api/v1/evaluations.py;tests/unit/test_reports.py,COMPLETED
-2026-10-03,1.2.0,TASK-UI-001,Candidate Voice Interview Shell with real-time waveform visualizer,frontend/interview_shell.html,COMPLETED
-2026-10-03,1.2.0,TASK-UI-002,Candidate Entry & Interactive Device Check with microphone tester,frontend/candidate_entry.html,COMPLETED
-2026-10-03,1.2.0,TASK-UI-003,Recruiter Portal with Command Center, Job creation wizard and Chart.js radar scorecard,frontend/recruiter_dashboard.html,COMPLETED
-2026-10-03,1.2.0,TASK-UI-004,Recruiter Login Screen with dark brand panel and OAuth layout,frontend/recruiter_login.html,COMPLETED
-2026-10-03,1.2.0,TASK-UI-005,Product Landing Page with interactive preview and workflow showcase,frontend/index.html;backend/main.py,COMPLETED
+2026-10-03,2.0.0,TASK-REACT-001,Migrated frontend to modern React + Vite + Tailwind CSS + Framer Motion SPA,frontend/package.json;frontend/src/App.jsx;frontend/src/pages/LandingPage.jsx;frontend/src/pages/VoiceInterviewShell.jsx;frontend/src/pages/RecruiterDashboard.jsx;frontend/src/pages/CandidateCheckin.jsx;frontend/src/pages/RecruiterLogin.jsx;backend/main.py,COMPLETED
