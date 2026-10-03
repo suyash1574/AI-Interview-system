@@ -99,6 +99,47 @@ export default function VoiceInterviewShell() {
     };
   }, [sessionId, interviewId]);
 
+  // Candidate Integrity Telemetry Monitoring (Tab Switch & Window Blur)
+  useEffect(() => {
+    const reportTelemetry = async (eventType, severity, meta = {}) => {
+      try {
+        await fetch(`/api/v1/interviews/${interviewId}/telemetry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event_type: eventType,
+            severity: severity,
+            metadata: {
+              ...meta,
+              client_timestamp: new Date().toISOString(),
+              elapsed_seconds: elapsedSeconds
+            }
+          })
+        });
+      } catch (e) {
+        console.warn('Telemetry dispatch error:', e);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        reportTelemetry('TAB_SWITCH', 'MEDIUM', { reason: 'visibility_hidden' });
+      }
+    };
+
+    const handleWindowBlur = () => {
+      reportTelemetry('WINDOW_BLUR', 'LOW', { reason: 'window_blur' });
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleWindowBlur);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleWindowBlur);
+    };
+  }, [interviewId, elapsedSeconds]);
+
   const sendCandidateAnswer = (textToSend) => {
     const text = textToSend || manualInput;
     if (!text.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;

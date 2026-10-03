@@ -1,0 +1,23 @@
+# Autergo AI Interview System — Changelog & Update Tracker
+
+| Date | Version | Feature ID | Description | Files Affected | Status |
+|---|---|---|---|---|---|
+| 2026-10-02 | 1.0.0 | CONSTITUTION-001 | Drafted Autergo System Constitution and initialized update tracker | `.specify/memory/constitution.md` | COMPLETED |
+| 2026-10-02 | 1.0.0 | TASK-INV-001 | Generate Candidate Guest JWT | `backend/core/services/tokens.py`, `backend/api/v1/invitations.py`, `tests/unit/test_invitations.py` | COMPLETED |
+| 2026-10-02 | 1.0.0 | TASK-PROV-001 | Implement ILLMProvider for Groq | `backend/providers/groq_adapter.py`, `tests/unit/test_groq_adapter.py` | COMPLETED |
+| 2026-10-02 | 1.0.0 | TASK-RTC-001 | LiveKit Token Management | `backend/api/v1/sessions.py`, `tests/unit/test_sessions.py` | COMPLETED |
+| 2026-10-02 | 1.0.0 | TASK-EVAL-001 | Implement TechnicalEvaluator NAT Agent and Celery Worker | `agents/technical.py`, `workers/tasks/evaluation.py`, `tests/unit/test_evaluation_agent.py` | COMPLETED |
+| 2026-10-03 | 1.1.0 | TASK-JOB-001 | Jobs API with GLiNER JD parsing and tenant isolation | `backend/api/v1/jobs.py`, `tests/unit/test_jobs.py` | COMPLETED |
+| 2026-10-03 | 1.1.0 | TASK-INT-001 | Interviews scheduling and session initiation API | `backend/api/v1/interviews.py`, `tests/unit/test_interviews.py` | COMPLETED |
+| 2026-10-03 | 1.1.0 | TASK-SEC-001 | Llama Guard 3 security filter against prompt injection | `backend/core/engine/security.py`, `tests/unit/test_security.py` | COMPLETED |
+| 2026-10-03 | 1.1.0 | TASK-RTC-002 | Realtime WebSocket interview engine with adaptive state transitions | `backend/api/v1/realtime.py`, `tests/unit/test_realtime.py` | COMPLETED |
+| 2026-10-03 | 1.1.0 | TASK-REP-001 | Post-interview report generation and email dispatch service | `backend/core/services/email.py`, `workers/tasks/reports.py`, `tests/unit/test_reports.py` | COMPLETED |
+| 2026-10-03 | 1.1.0 | TASK-EVAL-002 | Evaluations API with async background pipeline triggers | `backend/api/v1/evaluations.py`, `tests/unit/test_reports.py` | COMPLETED |
+| 2026-10-03 | 2.0.0 | TASK-REACT-001 | Migrated frontend to modern React + Vite + Tailwind CSS + Framer Motion SPA | `frontend/package.json`, `frontend/src/App.jsx`, `frontend/src/pages/LandingPage.jsx`, `frontend/src/pages/VoiceInterviewShell.jsx`, `frontend/src/pages/RecruiterDashboard.jsx`, `frontend/src/pages/CandidateCheckin.jsx`, `frontend/src/pages/RecruiterLogin.jsx`, `backend/main.py` | COMPLETED |
+| 2026-10-03 | 2.1.0 | TASK-SCHEMA-001 | Complete PostgreSQL database schema and SQLAlchemy models | `database/models.py`, `tests/unit/test_models.py` | COMPLETED |
+| 2026-10-03 | 2.1.0 | TASK-DRV-001 | Recruiter Drives API and batch candidate invitations | `backend/api/v1/drives.py`, `tests/unit/test_drives.py` | COMPLETED |
+| 2026-10-03 | 2.1.0 | TASK-RES-001 | Resume upload and competency extraction with pypdf and GLiNER | `backend/core/services/resume_parser.py`, `backend/api/v1/resumes.py`, `tests/unit/test_resumes.py` | COMPLETED |
+| 2026-10-03 | 2.1.0 | TASK-EVAL-003 | Multi-Agent consensus evaluation pipeline (Technical Behavioral Communication) | `agents/orchestrator.py`, `agents/behavioral.py`, `agents/communication.py`, `workers/tasks/evaluation.py`, `tests/unit/test_evaluation_agent.py` | COMPLETED |
+| 2026-10-03 | 2.1.0 | TASK-VOX-001 | Realtime LiveKit Voice Agent pipeline with Deepgram STT and Cartesia TTS | `realtime/voice_agent.py`, `backend/providers/deepgram_adapter.py`, `backend/providers/cartesia_adapter.py`, `tests/unit/test_voice_agent.py` | COMPLETED |
+| 2026-10-03 | 2.1.0 | TASK-EML-002 | Resend API transactional email dispatcher for invitations and reports | `backend/core/services/email.py`, `backend/api/v1/drives.py`, `tests/unit/test_email.py` | COMPLETED |
+| 2026-10-03 | 2.1.0 | TASK-INT-002 | Candidate integrity telemetry tracking and events endpoint | `backend/api/v1/interviews.py`, `frontend/src/pages/VoiceInterviewShell.jsx`, `tests/unit/test_integrity.py` | COMPLETED |
