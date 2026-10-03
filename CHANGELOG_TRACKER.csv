@@ -1,0 +1,17 @@
+Date,Version,Feature ID,Description,Files Affected,Status
+2026-10-02,1.0.0,CONSTITUTION-001,Drafted Autergo System Constitution and initialized update tracker,.specify/memory/constitution.md,COMPLETED
+2026-10-02,1.0.0,TASK-INV-001,Generate Candidate Guest JWT,backend/core/services/tokens.py;backend/api/v1/invitations.py;tests/unit/test_invitations.py,COMPLETED
+2026-10-02,1.0.0,TASK-PROV-001,Implement ILLMProvider for Groq,backend/providers/groq_adapter.py;tests/unit/test_groq_adapter.py,COMPLETED
+2026-10-02,1.0.0,TASK-RTC-001,LiveKit Token Management,backend/api/v1/sessions.py;tests/unit/test_sessions.py,COMPLETED
+2026-10-02,1.0.0,TASK-EVAL-001,Implement TechnicalEvaluator NAT Agent and Celery Worker,agents/technical.py;workers/tasks/evaluation.py;tests/unit/test_evaluation_agent.py,COMPLETED
+2026-10-03,1.1.0,TASK-JOB-001,Jobs API with GLiNER JD parsing and tenant isolation,backend/api/v1/jobs.py;tests/unit/test_jobs.py,COMPLETED
+2026-10-03,1.1.0,TASK-INT-001,Interviews scheduling and session initiation API,backend/api/v1/interviews.py;tests/unit/test_interviews.py,COMPLETED
+2026-10-03,1.1.0,TASK-SEC-001,Llama Guard 3 security filter against prompt injection,backend/core/engine/security.py;tests/unit/test_security.py,COMPLETED
+2026-10-03,1.1.0,TASK-RTC-002,Realtime WebSocket interview engine with adaptive state transitions,backend/api/v1/realtime.py;tests/unit/test_realtime.py,COMPLETED
+2026-10-03,1.1.0,TASK-REP-001,Post-interview report generation and email dispatch service,backend/core/services/email.py;workers/tasks/reports.py;tests/unit/test_reports.py,COMPLETED
+2026-10-03,1.1.0,TASK-EVAL-002,Evaluations API with async background pipeline triggers,backend/api/v1/evaluations.py;tests/unit/test_reports.py,COMPLETED
+2026-10-03,1.2.0,TASK-UI-001,Candidate Voice Interview Shell with real-time waveform visualizer,frontend/interview_shell.html,COMPLETED
+2026-10-03,1.2.0,TASK-UI-002,Candidate Entry & Interactive Device Check with microphone tester,frontend/candidate_entry.html,COMPLETED
+2026-10-03,1.2.0,TASK-UI-003,Recruiter Portal with Command Center, Job creation wizard and Chart.js radar scorecard,frontend/recruiter_dashboard.html,COMPLETED
+2026-10-03,1.2.0,TASK-UI-004,Recruiter Login Screen with dark brand panel and OAuth layout,frontend/recruiter_login.html,COMPLETED
+2026-10-03,1.2.0,TASK-UI-005,Product Landing Page with interactive preview and workflow showcase,frontend/index.html;backend/main.py,COMPLETED

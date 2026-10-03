@@ -3,13 +3,604 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autergo - Recruiter Dashboard</title>
+    <title>Autergo — Recruiter Portal</title>
+    <!-- Inter Font & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Tailwind CSS with Autergo Design Tokens -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        canvas: '#ffffff',
+                        'canvas-subtle': '#f8f9fa',
+                        'canvas-muted': '#f1f3f5',
+                        border: '#e5e7eb',
+                        'border-strong': '#d1d5db',
+                        ink: '#111827',
+                        'ink-secondary': '#374151',
+                        'ink-muted': '#6b7280',
+                        primary: {
+                            DEFAULT: '#1a56db',
+                            hover: '#1648c4',
+                            active: '#1340b0',
+                            subtle: '#eff3ff'
+                        },
+                        dark: {
+                            base: '#0f1117',
+                            surface: '#181c27',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            ink: '#f1f3f5',
+                            muted: '#9ca3af'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #111827;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .nav-item-active {
+            background-color: #eff3ff;
+            color: #1a56db;
+            font-weight: 500;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="p-10 bg-white rounded-lg shadow-xl text-center">
-        <h1 class="text-3xl font-bold mb-4">Recruiter Dashboard</h1>
-        <p class="text-gray-600">Autergo Platform Shell</p>
+<body class="h-screen w-screen flex overflow-hidden">
+
+    <!-- Left Navigation Rail (Persistent Sidebar ≥1280px per Plan) -->
+    <aside class="w-64 border-r border-border bg-white flex flex-col justify-between select-none">
+        <div>
+            <!-- Wordmark Header -->
+            <div class="h-14 border-b border-border flex items-center px-6 space-x-2.5">
+                <i class="ph-bold ph-shield-check text-primary text-xl"></i>
+                <span class="font-semibold text-base tracking-tight text-ink">Autergo</span>
+                <span class="text-[10px] font-mono uppercase bg-primary-subtle text-primary px-1.5 py-0.5 rounded font-medium">B2B</span>
+            </div>
+
+            <!-- Navigation Sections -->
+            <nav class="p-3 space-y-1 text-xs font-medium">
+                <div class="px-3 pt-3 pb-1 text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Hiring Pipeline</div>
+                <button onclick="switchTab('overview')" id="tab-overview" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-ink hover:bg-canvas-subtle transition-colors nav-item-active">
+                    <i class="ph-bold ph-chart-pie-slice text-base"></i>
+                    <span>Overview</span>
+                </button>
+                <button onclick="switchTab('drives')" id="tab-drives" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-ink hover:bg-canvas-subtle transition-colors">
+                    <i class="ph-bold ph-briefcase text-base"></i>
+                    <span>Drives & Jobs</span>
+                </button>
+                <button onclick="switchTab('candidates')" id="tab-candidates" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-ink hover:bg-canvas-subtle transition-colors">
+                    <i class="ph-bold ph-users text-base"></i>
+                    <span>Candidates</span>
+                </button>
+                <button onclick="switchTab('reports')" id="tab-reports" class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-ink hover:bg-canvas-subtle transition-colors">
+                    <i class="ph-bold ph-file-text text-base"></i>
+                    <span>Evaluation Reports</span>
+                </button>
+
+                <div class="px-3 pt-5 pb-1 text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Administration</div>
+                <button class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-ink hover:bg-canvas-subtle transition-colors">
+                    <i class="ph-bold ph-shield-warning text-base"></i>
+                    <span>Integrity Logs</span>
+                </button>
+                <button class="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-ink hover:bg-canvas-subtle transition-colors">
+                    <i class="ph-bold ph-gear text-base"></i>
+                    <span>Settings</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tenant / Recruiter Badge Footer -->
+        <div class="p-4 border-t border-border flex items-center justify-between">
+            <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-full bg-primary-subtle text-primary font-semibold flex items-center justify-center text-xs">
+                    AC
+                </div>
+                <div>
+                    <div class="text-xs font-semibold text-ink">Acme Corp</div>
+                    <div class="text-[11px] text-ink-muted">admin@acme.com</div>
+                </div>
+            </div>
+            <i class="ph-bold ph-sign-out text-ink-muted hover:text-ink cursor-pointer text-base"></i>
+        </div>
+    </aside>
+
+    <!-- Main Operational Surface -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden">
+
+        <!-- Top Bar -->
+        <header class="h-14 border-b border-border bg-white px-8 flex items-center justify-between">
+            <div class="flex items-center space-x-2 text-xs">
+                <span class="text-ink-muted">Portal</span>
+                <span class="text-border">/</span>
+                <span id="pageTitleBreadcrumb" class="font-medium text-ink">Overview</span>
+            </div>
+
+            <!-- Primary Global Actions -->
+            <div class="flex items-center space-x-3">
+                <button onclick="openCreateJobModal()" class="bg-primary hover:bg-primary-hover active:scale-95 text-white px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center space-x-1.5 shadow-sm">
+                    <i class="ph-bold ph-plus"></i>
+                    <span>Create Job / Drive</span>
+                </button>
+                <button onclick="openInviteModal()" class="border border-border hover:bg-canvas-subtle text-ink px-3.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center space-x-1.5">
+                    <i class="ph-bold ph-paper-plane-tilt"></i>
+                    <span>Invite Candidate</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Body -->
+        <main class="flex-1 overflow-y-auto p-8 space-y-8">
+
+            <!-- TAB 1: OVERVIEW (SCR-03) -->
+            <section id="view-overview" class="space-y-8">
+                <!-- KPI Strip (4 StatCards) -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+                    <div class="bg-white border border-border rounded-xl p-5 shadow-xs">
+                        <div class="text-xs font-medium text-ink-muted">Active Drives</div>
+                        <div class="text-2xl font-semibold text-ink mt-2 tracking-tight">4</div>
+                        <div class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-up-right"></i> +2 this month
+                        </div>
+                    </div>
+                    <div class="bg-white border border-border rounded-xl p-5 shadow-xs">
+                        <div class="text-xs font-medium text-ink-muted">Total Candidates</div>
+                        <div class="text-2xl font-semibold text-ink mt-2 tracking-tight">128</div>
+                        <div class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-up-right"></i> 94% evaluated
+                        </div>
+                    </div>
+                    <div class="bg-white border border-border rounded-xl p-5 shadow-xs">
+                        <div class="text-xs font-medium text-ink-muted">Interviews Completed</div>
+                        <div class="text-2xl font-semibold text-ink mt-2 tracking-tight">42</div>
+                        <div class="text-[11px] text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                            <i class="ph-bold ph-arrow-up-right"></i> +12 this week
+                        </div>
+                    </div>
+                    <div class="bg-white border border-border rounded-xl p-5 shadow-xs">
+                        <div class="text-xs font-medium text-ink-muted">Average Competency Score</div>
+                        <div class="text-2xl font-semibold text-ink mt-2 tracking-tight">82.4<span class="text-xs font-normal text-ink-muted">/100</span></div>
+                        <div class="text-[11px] text-ink-muted font-medium mt-1 flex items-center gap-1">
+                            High benchmark accuracy
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two-Column Section: Active Drives & Activity Stream -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left: Active Drives Table (65%) -->
+                    <div class="lg:col-span-2 bg-white border border-border rounded-xl p-6 shadow-xs">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-semibold text-ink tracking-tight">Active Recruitment Drives</h3>
+                            <button onclick="switchTab('drives')" class="text-xs font-medium text-primary hover:underline">View all &rarr;</button>
+                        </div>
+                        <div class="divide-y divide-border">
+                            <div class="py-3 flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs font-semibold text-ink">Senior Backend Engineer</div>
+                                    <div class="text-[11px] text-ink-muted">Python, PostgreSQL, Distributed Systems</div>
+                                </div>
+                                <div class="flex items-center space-x-3 text-xs">
+                                    <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium text-[11px]">ACTIVE</span>
+                                    <span class="text-ink-muted font-mono">18 / 20 Completed</span>
+                                </div>
+                            </div>
+                            <div class="py-3 flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs font-semibold text-ink">AI / Machine Learning Engineer</div>
+                                    <div class="text-[11px] text-ink-muted">PyTorch, LLM Fine-Tuning, vLLM</div>
+                                </div>
+                                <div class="flex items-center space-x-3 text-xs">
+                                    <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium text-[11px]">ACTIVE</span>
+                                    <span class="text-ink-muted font-mono">8 / 12 Completed</span>
+                                </div>
+                            </div>
+                            <div class="py-3 flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs font-semibold text-ink">Site Reliability Engineer</div>
+                                    <div class="text-[11px] text-ink-muted">Kubernetes, Terraform, Observability</div>
+                                </div>
+                                <div class="flex items-center space-x-3 text-xs">
+                                    <span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-medium text-[11px]">PAUSED</span>
+                                    <span class="text-ink-muted font-mono">5 / 15 Completed</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Live Activity Stream (35%) -->
+                    <div class="bg-white border border-border rounded-xl p-6 shadow-xs">
+                        <h3 class="text-sm font-semibold text-ink tracking-tight mb-4">Live Session Stream</h3>
+                        <div class="space-y-4 text-xs">
+                            <div class="flex items-start space-x-3">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 mt-1.5"></span>
+                                <div>
+                                    <div class="text-ink font-medium">Jane Doe completed interview</div>
+                                    <div class="text-[11px] text-ink-muted">Backend Specialist &bull; Score: 88/100</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <span class="w-2 h-2 rounded-full bg-primary mt-1.5 animate-pulse"></span>
+                                <div>
+                                    <div class="text-ink font-medium">Alex Smith started interview</div>
+                                    <div class="text-[11px] text-ink-muted">AI Engineer &bull; LiveKit Session Active</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <span class="w-2 h-2 rounded-full bg-dark-border mt-1.5"></span>
+                                <div>
+                                    <div class="text-ink font-medium">Invitation delivered to Carlos M.</div>
+                                    <div class="text-[11px] text-ink-muted">Site Reliability Engineer &bull; Guest Token</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: DRIVES & JOBS (SCR-04) -->
+            <section id="view-drives" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-ink tracking-tight">Recruitment Drives & Job Profiles</h2>
+                        <p class="text-xs text-ink-muted">Manage your active positions and AI competency blueprints.</p>
+                    </div>
+                    <button onclick="openCreateJobModal()" class="bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                        + New Job
+                    </button>
+                </div>
+
+                <!-- Job List Table -->
+                <div class="bg-white border border-border rounded-xl overflow-hidden shadow-xs">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-canvas-subtle border-b border-border text-[11px] font-semibold text-ink-muted uppercase tracking-wider font-mono">
+                            <tr>
+                                <th class="py-3 px-4">Job Title</th>
+                                <th class="py-3 px-4">Extracted Competencies</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobsTableBody" class="divide-y divide-border">
+                            <tr>
+                                <td class="py-3 px-4 font-semibold text-ink">Senior Backend Engineer</td>
+                                <td class="py-3 px-4">
+                                    <span class="inline-block bg-primary-subtle text-primary px-2 py-0.5 rounded text-[11px] font-mono mr-1">Python</span>
+                                    <span class="inline-block bg-primary-subtle text-primary px-2 py-0.5 rounded text-[11px] font-mono mr-1">PostgreSQL</span>
+                                    <span class="inline-block bg-primary-subtle text-primary px-2 py-0.5 rounded text-[11px] font-mono">FastAPI</span>
+                                </td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-medium text-[11px]">ACTIVE</span></td>
+                                <td class="py-3 px-4 text-right"><button onclick="switchTab('candidates')" class="text-primary hover:underline">View Candidates</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 3: CANDIDATES (SCR-07) -->
+            <section id="view-candidates" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-ink tracking-tight">Candidates Roster</h2>
+                        <p class="text-xs text-ink-muted">Track candidate interview progression and guest access links.</p>
+                    </div>
+                    <button onclick="openInviteModal()" class="bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                        + Invite Candidate
+                    </button>
+                </div>
+
+                <div class="bg-white border border-border rounded-xl overflow-hidden shadow-xs">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-canvas-subtle border-b border-border text-[11px] font-semibold text-ink-muted uppercase tracking-wider font-mono">
+                            <tr>
+                                <th class="py-3 px-4">Candidate</th>
+                                <th class="py-3 px-4">Target Position</th>
+                                <th class="py-3 px-4">Session Status</th>
+                                <th class="py-3 px-4">Score</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="candidatesTableBody" class="divide-y divide-border">
+                            <tr>
+                                <td class="py-3 px-4">
+                                    <div class="font-medium text-ink">Jane Doe</div>
+                                    <div class="text-[11px] text-ink-muted">jane@example.com</div>
+                                </td>
+                                <td class="py-3 px-4 text-ink">Senior Backend Engineer</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-medium text-[11px]">COMPLETED</span></td>
+                                <td class="py-3 px-4 font-mono font-semibold text-emerald-600">88 / 100</td>
+                                <td class="py-3 px-4 text-right">
+                                    <button onclick="switchTab('reports')" class="text-primary hover:underline">View Scorecard</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">
+                                    <div class="font-medium text-ink">Alex Smith</div>
+                                    <div class="text-[11px] text-ink-muted">alex.smith@example.com</div>
+                                </td>
+                                <td class="py-3 px-4 text-ink">AI / Machine Learning Engineer</td>
+                                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full font-medium text-[11px]">IN_PROGRESS</span></td>
+                                <td class="py-3 px-4 font-mono text-ink-muted">--</td>
+                                <td class="py-3 px-4 text-right">
+                                    <a href="/frontend/interview_shell.html?session_id=live-session-1" target="_blank" class="text-primary hover:underline">Spectate Live</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- TAB 4: EVALUATION REPORTS (SCR-16 & SCR-17) -->
+            <section id="view-reports" class="hidden space-y-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-semibold text-ink tracking-tight">Candidate Evaluation Scorecard</h2>
+                        <p class="text-xs text-ink-muted">Evidence-backed competency report for candidate Jane Doe.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="border border-border hover:bg-canvas-subtle px-3 py-1.5 rounded-lg text-xs font-medium">Export PDF</button>
+                        <button class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">Advance to Next Round</button>
+                    </div>
+                </div>
+
+                <!-- Report Card -->
+                <div class="bg-white border border-border rounded-xl p-6 shadow-xs space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 border-b border-border gap-4">
+                        <div>
+                            <span class="text-[11px] font-mono bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-medium">PASS RECOMMENDATION</span>
+                            <h3 class="text-xl font-semibold text-ink mt-2">Jane Doe</h3>
+                            <div class="text-xs text-ink-muted font-mono mt-0.5">Role: Senior Backend Engineer &bull; Completed Oct 3, 2026</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs text-ink-muted font-medium">Overall Assessment Score</div>
+                            <div class="text-3xl font-bold text-emerald-600 font-mono mt-0.5">88<span class="text-sm font-normal text-ink-muted">/100</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Radar & Competency Breakdown Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div class="h-64 flex justify-center">
+                            <canvas id="competencyRadarChart"></canvas>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1">
+                                    <span>System Architecture</span>
+                                    <span class="font-mono text-emerald-600">92%</span>
+                                </div>
+                                <div class="w-full bg-canvas-muted h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-600 h-full w-[92%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1">
+                                    <span>Database Optimization</span>
+                                    <span class="font-mono text-emerald-600">85%</span>
+                                </div>
+                                <div class="w-full bg-canvas-muted h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-600 h-full w-[85%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1">
+                                    <span>Fault Tolerance & Scalability</span>
+                                    <span class="font-mono text-emerald-600">88%</span>
+                                </div>
+                                <div class="w-full bg-canvas-muted h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-600 h-full w-[88%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-medium mb-1">
+                                    <span>Communication & Clarity</span>
+                                    <span class="font-mono text-emerald-600">87%</span>
+                                </div>
+                                <div class="w-full bg-canvas-muted h-2 rounded-full overflow-hidden">
+                                    <div class="bg-emerald-600 h-full w-[87%]"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cited Evidence Quotes Section (traceability) -->
+                    <div class="pt-6 border-t border-border">
+                        <h4 class="text-xs font-semibold text-ink uppercase tracking-wider font-mono mb-3">Verified Transcript Evidence Quotes</h4>
+                        <div class="space-y-2.5">
+                            <div class="bg-canvas-subtle border border-border rounded-lg p-3 text-xs">
+                                <span class="font-semibold text-primary font-mono text-[11px]">[System Design - Q3]:</span>
+                                <span class="text-ink italic">"I migrated our relational database writes to an asynchronous queue using Redis and partitioned tables by tenant ID to guarantee isolation under high concurrency."</span>
+                                <div class="text-[11px] text-emerald-600 font-medium mt-1">Relevance: High &bull; Confirmed practical experience with RLS partitioning.</div>
+                            </div>
+                            <div class="bg-canvas-subtle border border-border rounded-lg p-3 text-xs">
+                                <span class="font-semibold text-primary font-mono text-[11px]">[Fault Tolerance - Q6]:</span>
+                                <span class="text-ink italic">"When worker pools crash during batch operations, our idempotent job identifiers prevent duplicated side effects upon consumer restart."</span>
+                                <div class="text-[11px] text-emerald-600 font-medium mt-1">Relevance: High &bull; Clear comprehension of idempotent state recovery.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
+
+    <!-- MODAL 1: CREATE JOB / DRIVE (SCR-05) -->
+    <div id="createJobModal" class="hidden fixed inset-0 bg-dark-base/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+        <div class="bg-white border border-border rounded-xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-border pb-3">
+                <h3 class="text-sm font-semibold text-ink">Create Job & Parse Competencies</h3>
+                <i onclick="closeCreateJobModal()" class="ph-bold ph-x text-ink-muted hover:text-ink cursor-pointer"></i>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-ink mb-1">Job Title</label>
+                    <input type="text" id="newJobTitle" placeholder="e.g. Senior Backend Engineer" class="w-full border border-border rounded-lg p-2.5 text-xs focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                    <label class="block font-medium text-ink mb-1">Job Description</label>
+                    <textarea id="newJobJD" rows="4" placeholder="Paste the job requirements here. The GLiNER extractor will automatically extract competencies..." class="w-full border border-border rounded-lg p-2.5 text-xs focus:outline-none focus:border-primary font-sans"></textarea>
+                    <span class="text-[11px] text-ink-muted italic">Autergo AI will extract skills and competencies automatically.</span>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2 border-t border-border">
+                <button onclick="closeCreateJobModal()" class="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-ink hover:bg-canvas-subtle">Cancel</button>
+                <button id="saveJobBtn" onclick="submitCreateJob()" class="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium">Create Job</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: INVITE CANDIDATE (SCR-11) -->
+    <div id="inviteModal" class="hidden fixed inset-0 bg-dark-base/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+        <div class="bg-white border border-border rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-border pb-3">
+                <h3 class="text-sm font-semibold text-ink">Invite Candidate to Drive</h3>
+                <i onclick="closeInviteModal()" class="ph-bold ph-x text-ink-muted hover:text-ink cursor-pointer"></i>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-medium text-ink mb-1">Candidate Full Name</label>
+                    <input type="text" id="inviteName" placeholder="e.g. John Doe" class="w-full border border-border rounded-lg p-2.5 text-xs focus:outline-none focus:border-primary">
+                </div>
+                <div>
+                    <label class="block font-medium text-ink mb-1">Candidate Email</label>
+                    <input type="email" id="inviteEmail" placeholder="candidate@example.com" class="w-full border border-border rounded-lg p-2.5 text-xs focus:outline-none focus:border-primary">
+                </div>
+                <div id="inviteLinkResult" class="hidden bg-canvas-subtle border border-border rounded p-2.5 text-xs font-mono space-y-1">
+                    <span class="text-ink-muted text-[11px]">Guest Interview Link:</span>
+                    <input type="text" id="generatedLink" readonly class="w-full bg-white border border-border rounded p-1.5 text-[11px]">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2 border-t border-border">
+                <button onclick="closeInviteModal()" class="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-ink hover:bg-canvas-subtle">Close</button>
+                <button id="sendInviteBtn" onclick="submitInviteCandidate()" class="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-medium">Issue Invitation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Logic & Radar Chart Initialization -->
+    <script>
+        function switchTab(tab) {
+            ['overview', 'drives', 'candidates', 'reports'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                document.getElementById(`tab-${t}`).classList.remove('nav-item-active');
+            });
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('nav-item-active');
+            document.getElementById('pageTitleBreadcrumb').textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+        }
+
+        // Modals
+        function openCreateJobModal() { document.getElementById('createJobModal').classList.remove('hidden'); }
+        function closeCreateJobModal() { document.getElementById('createJobModal').classList.add('hidden'); }
+
+        function openInviteModal() {
+            document.getElementById('inviteLinkResult').classList.add('hidden');
+            document.getElementById('inviteModal').classList.remove('hidden');
+        }
+        function closeInviteModal() { document.getElementById('inviteModal').classList.add('hidden'); }
+
+        // API: Submit Create Job
+        async function submitCreateJob() {
+            const title = document.getElementById('newJobTitle').value;
+            const desc = document.getElementById('newJobJD').value;
+            if (!title) return alert('Job Title required');
+
+            // Optimistic row append
+            const tbody = document.getElementById('jobsTableBody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="py-3 px-4 font-semibold text-ink">${title}</td>
+                <td class="py-3 px-4">
+                    <span class="inline-block bg-primary-subtle text-primary px-2 py-0.5 rounded text-[11px] font-mono mr-1">Extracted via GLiNER</span>
+                </td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full font-medium text-[11px]">ACTIVE</span></td>
+                <td class="py-3 px-4 text-right"><button onclick="switchTab('candidates')" class="text-primary hover:underline">View Candidates</button></td>
+            `;
+            tbody.prepend(row);
+            closeCreateJobModal();
+            switchTab('drives');
+        }
+
+        // API: Submit Invite Candidate
+        async function submitInviteCandidate() {
+            const name = document.getElementById('inviteName').value;
+            const email = document.getElementById('inviteEmail').value;
+            if (!name || !email) return alert('Name and email required');
+
+            const token = 'guest-' + Math.random().toString(36).substring(2, 10);
+            const link = `${window.location.origin}/frontend/candidate_entry.html?interview_id=int-${Math.random().toString(36).substring(2, 6)}&token=${token}`;
+
+            document.getElementById('generatedLink').value = link;
+            document.getElementById('inviteLinkResult').classList.remove('hidden');
+
+            // Optimistic add to candidates table
+            const tbody = document.getElementById('candidatesTableBody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="py-3 px-4">
+                    <div class="font-medium text-ink">${name}</div>
+                    <div class="text-[11px] text-ink-muted">${email}</div>
+                </td>
+                <td class="py-3 px-4 text-ink">Senior Backend Engineer</td>
+                <td class="py-3 px-4"><span class="px-2 py-0.5 bg-primary-subtle text-primary rounded-full font-medium text-[11px]">INVITED</span></td>
+                <td class="py-3 px-4 font-mono text-ink-muted">--</td>
+                <td class="py-3 px-4 text-right">
+                    <a href="${link}" target="_blank" class="text-primary hover:underline">Open Session Link</a>
+                </td>
+            `;
+            tbody.prepend(row);
+        }
+
+        // Initialize Chart.js Radar
+        window.addEventListener('DOMContentLoaded', () => {
+            const ctx = document.getElementById('competencyRadarChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['System Design', 'Algorithms', 'Databases', 'Fault Tolerance', 'Communication'],
+                        datasets: [{
+                            label: 'Candidate Score',
+                            data: [92, 85, 88, 88, 87],
+                            backgroundColor: 'rgba(26, 86, 219, 0.2)',
+                            borderColor: '#1a56db',
+                            borderWidth: 2,
+                            pointBackgroundColor: '#1a56db'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                suggestedMin: 50,
+                                suggestedMax: 100,
+                                ticks: { font: { size: 10 } }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

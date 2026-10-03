@@ -3,13 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autergo - Recruiter Login</title>
+    <title>Autergo — Recruiter Sign In</title>
+    <!-- Inter Font & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Tailwind CSS with Autergo Design Tokens -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            base: '#0f1117',
+                            surface: '#181c27',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            ink: '#f1f3f5',
+                            muted: '#9ca3af'
+                        },
+                        primary: {
+                            DEFAULT: '#1a56db',
+                            hover: '#1648c4',
+                            active: '#1340b0',
+                            subtle: '#eff3ff'
+                        },
+                        border: '#e5e7eb',
+                        ink: '#111827',
+                        'ink-muted': '#6b7280'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="p-10 bg-white rounded-lg shadow-xl text-center">
-        <h1 class="text-3xl font-bold mb-4">Recruiter Login</h1>
-        <p class="text-gray-600">Autergo Platform Shell</p>
+<body class="h-screen w-screen flex bg-white overflow-hidden">
+
+    <!-- Left Brand Panel (40% per SCR-02) -->
+    <div class="hidden lg:flex lg:w-5/12 bg-dark-base p-12 flex-col justify-between border-r border-dark-border text-white select-none">
+        <!-- Wordmark -->
+        <div class="flex items-center space-x-2.5">
+            <i class="ph-bold ph-shield-check text-primary text-2xl"></i>
+            <span class="font-semibold text-lg tracking-tight">Autergo</span>
+        </div>
+
+        <!-- Pull-Quote Testimonial -->
+        <div class="space-y-4 max-w-sm">
+            <p class="text-lg font-medium leading-relaxed tracking-tight text-dark-ink">
+                "Autergo cut our engineering screening time by 75% without compromising technical depth. The evidence-backed scorecards eliminate recruiter second-guessing."
+            </p>
+            <div>
+                <div class="text-xs font-semibold text-white">Elena Rostova</div>
+                <div class="text-[11px] text-dark-muted">Head of Technical Talent &bull; ScaleGrid Systems</div>
+            </div>
+        </div>
+
+        <!-- Subtext Footer -->
+        <div class="text-xs text-dark-muted font-mono">
+            Autonomous Voice-First Technical Interviews
+        </div>
     </div>
+
+    <!-- Right Form Panel (60% per SCR-02) -->
+    <div class="flex-1 flex flex-col justify-center items-center p-8 bg-white overflow-y-auto">
+        <div class="max-w-md w-full space-y-8">
+            <div>
+                <div class="lg:hidden flex items-center space-x-2 text-primary font-semibold text-base mb-6">
+                    <i class="ph-bold ph-shield-check text-xl"></i>
+                    <span>Autergo</span>
+                </div>
+                <h1 class="text-2xl font-semibold text-ink tracking-tight">Sign in to Autergo</h1>
+                <p class="text-xs text-ink-muted mt-1.5">
+                    New to Autergo? <a href="#" class="text-primary hover:underline font-medium">Request an enterprise pilot</a>
+                </p>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="handleLogin(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-medium text-ink mb-1.5">Work Email</label>
+                    <input type="email" id="email" required placeholder="recruiter@company.com" class="w-full border border-border rounded-lg p-3 text-xs focus:outline-none focus:border-primary transition-colors">
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="font-medium text-ink">Password</label>
+                        <a href="#" class="text-primary hover:underline text-[11px]">Forgot password?</a>
+                    </div>
+                    <input type="password" id="password" required placeholder="••••••••••••" class="w-full border border-border rounded-lg p-3 text-xs focus:outline-none focus:border-primary transition-colors">
+                </div>
+
+                <button type="submit" class="w-full bg-primary hover:bg-primary-hover active:scale-95 text-white py-3 rounded-full text-xs font-semibold transition-all shadow-xs">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-border"></div>
+                <span class="flex-shrink mx-4 text-ink-muted text-[11px] uppercase tracking-wider font-mono">or continue with</span>
+                <div class="flex-grow border-t border-border"></div>
+            </div>
+
+            <!-- OAuth Buttons -->
+            <div class="space-y-2.5">
+                <button onclick="window.location.href='/frontend/recruiter_dashboard.html'" class="w-full border border-border hover:bg-canvas-subtle p-2.5 rounded-lg text-xs font-medium text-ink flex items-center justify-center space-x-2 transition-colors">
+                    <i class="ph-bold ph-google-logo text-base"></i>
+                    <span>Continue with Google Workspace</span>
+                </button>
+                <button onclick="window.location.href='/frontend/recruiter_dashboard.html'" class="w-full border border-border hover:bg-canvas-subtle p-2.5 rounded-lg text-xs font-medium text-ink flex items-center justify-center space-x-2 transition-colors">
+                    <i class="ph-bold ph-github-logo text-base"></i>
+                    <span>Continue with GitHub SSO</span>
+                </button>
+            </div>
+
+            <div class="text-[11px] text-ink-muted text-center leading-relaxed">
+                By accessing Autergo, you agree to our <a href="#" class="text-primary hover:underline">Terms of Service</a> and <a href="#" class="text-primary hover:underline">Privacy Policy</a>. Data isolation enforced by tenant RLS.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function handleLogin(e) {
+            e.preventDefault();
+            window.location.href = '/frontend/recruiter_dashboard.html';
+        }
+    </script>
 </body>
 </html>

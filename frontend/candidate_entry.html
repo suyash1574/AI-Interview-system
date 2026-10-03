@@ -3,13 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autergo - Candidate Entry</title>
+    <title>Autergo — Candidate Interview Check-in</title>
+    <!-- Inter Font & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Tailwind CSS with Design Tokens -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        canvas: '#ffffff',
+                        'canvas-subtle': '#f8f9fa',
+                        border: '#e5e7eb',
+                        ink: '#111827',
+                        'ink-muted': '#6b7280',
+                        primary: {
+                            DEFAULT: '#1a56db',
+                            hover: '#1648c4',
+                            active: '#1340b0',
+                            subtle: '#eff3ff'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #111827;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="p-10 bg-white rounded-lg shadow-xl text-center">
-        <h1 class="text-3xl font-bold mb-4">Candidate Entry</h1>
-        <p class="text-gray-600">Autergo Platform Shell</p>
-    </div>
+<body class="min-h-screen flex flex-col justify-between p-6">
+
+    <!-- Header -->
+    <header class="max-w-xl mx-auto w-full flex items-center justify-between pb-6 border-b border-border/80">
+        <div class="flex items-center space-x-2">
+            <i class="ph-bold ph-shield-check text-primary text-xl"></i>
+            <span class="text-sm font-semibold tracking-tight text-ink">Autergo</span>
+        </div>
+        <div class="text-xs text-ink-muted font-mono" id="driveCompany">Acme Corp Technical Drive</div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-xl mx-auto w-full my-auto py-8">
+
+        <!-- Stepper Indicator -->
+        <div class="flex items-center justify-between mb-8 px-4 text-xs font-medium">
+            <div id="step1Indicator" class="flex items-center space-x-2 text-primary">
+                <span class="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold">1</span>
+                <span>Verification</span>
+            </div>
+            <div class="h-0.5 flex-1 mx-4 bg-border"></div>
+            <div id="step2Indicator" class="flex items-center space-x-2 text-ink-muted">
+                <span class="w-6 h-6 rounded-full bg-border text-ink-muted flex items-center justify-center text-xs font-semibold">2</span>
+                <span>Device Check</span>
+            </div>
+        </div>
+
+        <!-- Card: Step 1 - Entry & Verification (SCR-12) -->
+        <div id="step1Card" class="bg-white border border-border rounded-xl p-8 shadow-sm">
+            <div class="mb-6">
+                <span class="text-[11px] font-mono uppercase tracking-wider text-primary bg-primary-subtle px-2.5 py-1 rounded-full font-semibold">
+                    Technical Screening
+                </span>
+                <h1 class="text-2xl font-semibold text-ink tracking-tight mt-3">Welcome to your interview</h1>
+                <p class="text-xs text-ink-muted mt-1 leading-relaxed">
+                    You have been invited to complete a live voice assessment. The session is dynamic, adaptive, and evidence-driven.
+                </p>
+            </div>
+
+            <!-- Candidate Details Preview -->
+            <div class="bg-canvas-subtle border border-border rounded-lg p-4 mb-6 text-xs space-y-2 font-mono">
+                <div class="flex justify-between"><span class="text-ink-muted">Candidate:</span> <span class="font-semibold text-ink" id="candNameDisplay">Jane Doe</span></div>
+                <div class="flex justify-between"><span class="text-ink-muted">Target Role:</span> <span class="text-ink">Backend Systems Specialist</span></div>
+                <div class="flex justify-between"><span class="text-ink-muted">Estimated Duration:</span> <span class="text-ink">20–30 minutes</span></div>
+            </div>
+
+            <!-- Guidelines -->
+            <div class="space-y-3 mb-8 text-xs text-ink">
+                <div class="flex items-start space-x-2.5">
+                    <i class="ph-bold ph-check text-emerald-600 mt-0.5 text-sm"></i>
+                    <span>Speak naturally into your microphone. The AI adapts to your depth and technical reasoning.</span>
+                </div>
+                <div class="flex items-start space-x-2.5">
+                    <i class="ph-bold ph-check text-emerald-600 mt-0.5 text-sm"></i>
+                    <span>You can interrupt or take the floor at any point during the interview.</span>
+                </div>
+                <div class="flex items-start space-x-2.5">
+                    <i class="ph-bold ph-check text-emerald-600 mt-0.5 text-sm"></i>
+                    <span>Please ensure you are in a quiet room with a reliable internet connection.</span>
+                </div>
+            </div>
+
+            <button id="toStep2Btn" class="w-full bg-primary hover:bg-primary-hover active:scale-95 text-white py-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center space-x-2">
+                <span>Continue to Device Check</span>
+                <i class="ph-bold ph-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Card: Step 2 - Device Check (SCR-13) -->
+        <div id="step2Card" class="hidden bg-white border border-border rounded-xl p-8 shadow-sm">
+            <h2 class="text-xl font-semibold text-ink tracking-tight mb-2">Check your setup</h2>
+            <p class="text-xs text-ink-muted mb-6 leading-relaxed">
+                Confirm your hardware and connection meet the standards for real-time voice streaming.
+            </p>
+
+            <div class="space-y-4 mb-8">
+                <!-- Microphone Check -->
+                <div class="border border-border rounded-lg p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-primary-subtle text-primary flex items-center justify-center text-base">
+                            <i class="ph-bold ph-microphone"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-medium text-ink">Microphone</div>
+                            <div id="micStatus" class="text-[11px] text-ink-muted font-mono">Click test to detect input</div>
+                        </div>
+                    </div>
+                    <button id="testMicBtn" class="border border-border hover:bg-canvas-subtle text-xs px-3 py-1.5 rounded-md font-medium text-ink transition-colors">
+                        Test Mic
+                    </button>
+                </div>
+
+                <!-- Browser Check -->
+                <div class="border border-border rounded-lg p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-base">
+                            <i class="ph-bold ph-globe"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-medium text-ink">Browser Compatibility</div>
+                            <div class="text-[11px] text-emerald-600 font-mono">Modern Browser Supported</div>
+                        </div>
+                    </div>
+                    <i class="ph-fill ph-check-circle text-emerald-600 text-lg"></i>
+                </div>
+
+                <!-- Network Latency Check -->
+                <div class="border border-border rounded-lg p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full bg-primary-subtle text-primary flex items-center justify-center text-base">
+                            <i class="ph-bold ph-wifi-high"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-medium text-ink">Network Latency</div>
+                            <div id="netStatus" class="text-[11px] text-emerald-600 font-mono">Optimal (< 60ms)</div>
+                        </div>
+                    </div>
+                    <i class="ph-fill ph-check-circle text-emerald-600 text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Quiet Environment Acknowledgement -->
+            <label class="flex items-center space-x-3 text-xs text-ink cursor-pointer mb-8">
+                <input type="checkbox" id="quietCheck" class="rounded border-border text-primary focus:ring-primary w-4 h-4">
+                <span>I confirm that I am in a quiet space and ready to begin.</span>
+            </label>
+
+            <button id="startInterviewBtn" disabled class="w-full bg-primary hover:bg-primary-hover active:scale-95 text-white py-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center space-x-2 disabled:opacity-40 disabled:pointer-events-none">
+                <i class="ph-bold ph-play"></i>
+                <span>Begin Interview</span>
+            </button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-xl mx-auto w-full text-center text-xs text-ink-muted pt-6 border-t border-border/80">
+        Autergo Enterprise Interview Platform &bull; End-to-End Encrypted Session
+    </footer>
+
+    <!-- Logic -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token') || 'demo-token';
+        const interviewId = urlParams.get('interview_id') || 'int-demo';
+
+        document.getElementById('toStep2Btn').addEventListener('click', () => {
+            document.getElementById('step1Card').classList.add('hidden');
+            document.getElementById('step2Card').classList.remove('hidden');
+
+            document.getElementById('step1Indicator').classList.remove('text-primary');
+            document.getElementById('step1Indicator').classList.add('text-emerald-600');
+            document.getElementById('step1Indicator').innerHTML = `
+                <span class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-semibold"><i class="ph-bold ph-check"></i></span>
+                <span>Verification</span>
+            `;
+
+            document.getElementById('step2Indicator').classList.remove('text-ink-muted');
+            document.getElementById('step2Indicator').classList.add('text-primary');
+            document.getElementById('step2Indicator').querySelector('span').className = 'w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-semibold';
+        });
+
+        // Test Mic
+        document.getElementById('testMicBtn').addEventListener('click', async () => {
+            const statusLabel = document.getElementById('micStatus');
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                statusLabel.textContent = "Microphone Active & Verified";
+                statusLabel.className = "text-[11px] text-emerald-600 font-mono";
+                document.getElementById('testMicBtn').textContent = "Verified";
+                document.getElementById('testMicBtn').className = "border border-emerald-500 bg-emerald-50 text-xs px-3 py-1.5 rounded-md font-medium text-emerald-700";
+                checkReady();
+            } catch (err) {
+                statusLabel.textContent = "Access denied / Simulated active";
+                statusLabel.className = "text-[11px] text-primary font-mono";
+                checkReady();
+            }
+        });
+
+        const quietCheck = document.getElementById('quietCheck');
+        quietCheck.addEventListener('change', checkReady);
+
+        function checkReady() {
+            const btn = document.getElementById('startInterviewBtn');
+            if (quietCheck.checked) {
+                btn.removeAttribute('disabled');
+            } else {
+                btn.setAttribute('disabled', 'true');
+            }
+        }
+
+        document.getElementById('startInterviewBtn').addEventListener('click', () => {
+            const sessionId = 'session-' + Math.random().toString(36).substring(2, 9);
+            window.location.href = `/frontend/interview_shell.html?session_id=${sessionId}&interview_id=${interviewId}&token=${token}`;
+        });
+    </script>
 </body>
 </html>

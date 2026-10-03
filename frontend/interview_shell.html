@@ -3,13 +3,366 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autergo - Interview Shell</title>
+    <title>Autergo — Voice Interview</title>
+    <!-- Inter Font & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Tailwind CSS with Design Tokens -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            base: '#0f1117',
+                            surface: '#181c27',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            ink: '#f1f3f5',
+                            muted: '#9ca3af'
+                        },
+                        primary: {
+                            DEFAULT: '#1a56db',
+                            hover: '#1648c4',
+                            active: '#1340b0',
+                            subtle: '#eff3ff',
+                            ondark: '#6ea8ff'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0f1117;
+            color: #f1f3f5;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Audio Visualizer Bar Animations */
+        .v-bar {
+            width: 4px;
+            border-radius: 2px;
+            transition: height 80ms ease-out, background-color 200ms ease;
+        }
+        .pulse-subtle {
+            animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulseSoft {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="p-10 bg-white rounded-lg shadow-xl text-center">
-        <h1 class="text-3xl font-bold mb-4">Interview Shell</h1>
-        <p class="text-gray-600">Autergo Platform Shell</p>
+<body class="h-screen w-screen flex flex-col justify-between overflow-hidden select-none">
+
+    <!-- Top Navigation Bar -->
+    <header class="h-14 border-b border-dark-border px-6 flex items-center justify-between bg-dark-surface/40 backdrop-blur-md">
+        <div class="flex items-center space-x-3">
+            <span class="text-sm font-semibold tracking-tight text-white flex items-center gap-1.5">
+                <i class="ph-bold ph-shield-check text-primary-ondark text-base"></i>
+                Autergo
+            </span>
+            <span class="text-dark-border text-xs">/</span>
+            <span id="interviewRole" class="text-xs text-dark-muted font-medium">Technical Screening</span>
+        </div>
+
+        <!-- Center Stage Pill -->
+        <div class="flex items-center space-x-2 bg-dark-surface border border-dark-border px-3 py-1 rounded-full text-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-dark-muted font-mono uppercase text-[11px] tracking-wider">Stage:</span>
+            <span id="currentStageText" class="font-medium text-white">INTRODUCTION</span>
+        </div>
+
+        <!-- Connection Status -->
+        <div class="flex items-center space-x-2">
+            <div id="connectionStatus" class="flex items-center space-x-1.5 text-xs text-emerald-400">
+                <i class="ph-fill ph-circle text-[8px]"></i>
+                <span class="font-mono text-[11px]">CONNECTED</span>
+            </div>
+            <span class="text-dark-muted text-xs font-mono pl-3" id="elapsedTimer">00:00</span>
+        </div>
+    </header>
+
+    <!-- Main Interview Area -->
+    <main class="flex-1 flex flex-col items-center justify-center px-4 max-w-3xl mx-auto w-full relative">
+
+        <!-- Question / Stage Context Card -->
+        <div class="w-full bg-dark-surface/60 border border-dark-border rounded-xl p-5 mb-8 text-center backdrop-blur-sm shadow-xl transition-all duration-300">
+            <span id="competencyTag" class="inline-block text-[11px] font-mono tracking-wider text-primary-ondark bg-primary/20 px-2.5 py-0.5 rounded-full mb-3">
+                SYSTEM DESIGN & PROBLEM SOLVING
+            </span>
+            <h2 id="aiPromptHeading" class="text-lg md:text-xl font-medium text-white leading-relaxed tracking-tight">
+                "Hello! Welcome to your Autergo technical interview. Please briefly introduce yourself and your background."
+            </h2>
+        </div>
+
+        <!-- Visualizer & State Display -->
+        <div class="flex flex-col items-center justify-center my-6">
+            <!-- Audio Visualizer Waveform Bars -->
+            <div class="flex items-center justify-center space-x-2 h-16 mb-4">
+                <div id="bar1" class="v-bar h-3 bg-dark-muted"></div>
+                <div id="bar2" class="v-bar h-5 bg-dark-muted"></div>
+                <div id="bar3" class="v-bar h-8 bg-dark-muted"></div>
+                <div id="bar4" class="v-bar h-5 bg-dark-muted"></div>
+                <div id="bar5" class="v-bar h-3 bg-dark-muted"></div>
+            </div>
+
+            <!-- State Label -->
+            <div id="stateIndicator" class="flex items-center space-x-2 text-sm font-medium text-dark-muted">
+                <i id="stateIcon" class="ph-bold ph-waveform text-primary-ondark text-base"></i>
+                <span id="stateText">Listening — your microphone is active</span>
+            </div>
+        </div>
+
+        <!-- Realtime Captions Panel -->
+        <div class="w-full max-h-48 overflow-y-auto bg-dark-surface/30 border border-dark-border/60 rounded-lg p-4 font-mono text-xs space-y-2.5 shadow-inner" id="transcriptFeed">
+            <div class="text-dark-muted text-[11px] italic">Transcript stream initialized...</div>
+        </div>
+
+        <!-- Optional Manual Text Answer Bar (Speech Fallback) -->
+        <div class="w-full mt-4 flex items-center space-x-2">
+            <input type="text" id="manualInput" placeholder="Type answer or speak naturally into your microphone..." class="flex-1 bg-dark-surface border border-dark-border rounded-lg px-4 py-2.5 text-xs text-white placeholder-dark-muted focus:outline-none focus:border-primary transition-colors font-mono">
+            <button id="sendAnswerBtn" class="bg-primary hover:bg-primary-hover active:scale-95 text-white px-4 py-2.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5">
+                <span>Send</span>
+                <i class="ph-bold ph-paper-plane-right"></i>
+            </button>
+        </div>
+    </main>
+
+    <!-- Bottom Controls Deck -->
+    <footer class="h-20 border-t border-dark-border px-8 flex items-center justify-between bg-dark-surface/50 backdrop-blur-md">
+        <!-- Candidate Identity Badge -->
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-full bg-dark-surface border border-dark-border flex items-center justify-center font-medium text-xs text-white">
+                JD
+            </div>
+            <div>
+                <div class="text-xs font-medium text-white" id="candidateName">Candidate</div>
+                <div class="text-[11px] text-dark-muted font-mono" id="candidateSession">Session Active</div>
+            </div>
+        </div>
+
+        <!-- Interactive Control Actions -->
+        <div class="flex items-center space-x-4">
+            <!-- Mute Toggle -->
+            <button id="muteBtn" class="flex items-center space-x-2 bg-dark-surface border border-dark-border hover:border-dark-muted px-4 py-2 rounded-full text-xs font-medium transition-all text-white active:scale-95">
+                <i id="muteIcon" class="ph-bold ph-microphone text-base text-emerald-400"></i>
+                <span id="muteText">Mute Mic</span>
+            </button>
+
+            <!-- Barge-in / Interrupt -->
+            <button id="interruptBtn" class="flex items-center space-x-2 bg-dark-surface border border-dark-border hover:border-amber-500/50 px-4 py-2 rounded-full text-xs font-medium transition-all text-amber-400 active:scale-95">
+                <i class="ph-bold ph-hand-palm text-base"></i>
+                <span>Interrupt AI</span>
+            </button>
+
+            <!-- Complete Interview -->
+            <button id="finishBtn" class="bg-red-950/40 border border-red-800/60 hover:bg-red-900/60 text-red-200 px-4 py-2 rounded-full text-xs font-medium transition-all active:scale-95">
+                End Interview
+            </button>
+        </div>
+
+        <!-- Security Badge -->
+        <div class="flex items-center space-x-1.5 text-dark-muted text-xs font-mono">
+            <i class="ph-bold ph-lock-key text-xs"></i>
+            <span>TLS Encrypted</span>
+        </div>
+    </footer>
+
+    <!-- Interview Complete Overlay Modal (SCR-15) -->
+    <div id="completeModal" class="hidden fixed inset-0 bg-dark-base/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
+        <div class="bg-dark-surface border border-dark-border rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+            <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto mb-4 text-emerald-400 text-2xl">
+                <i class="ph-bold ph-check-circle"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-2 tracking-tight">Interview Submitted</h3>
+            <p class="text-xs text-dark-muted leading-relaxed mb-6">
+                Your voice responses have been encrypted and submitted to the evaluation engine. The recruiting team will review the evidence-backed scorecard shortly.
+            </p>
+            <div class="bg-dark-base/60 border border-dark-border rounded-lg p-3.5 mb-6 text-left text-xs font-mono space-y-1.5">
+                <div class="flex justify-between text-dark-muted"><span>Session Duration:</span> <span id="finalDuration" class="text-white">--</span></div>
+                <div class="flex justify-between text-dark-muted"><span>Questions Completed:</span> <span class="text-emerald-400">10 / 10 Stages</span></div>
+                <div class="flex justify-between text-dark-muted"><span>Pipeline Status:</span> <span class="text-primary-ondark">EVAL_QUEUED</span></div>
+            </div>
+            <button onclick="window.close();" class="w-full bg-primary hover:bg-primary-hover active:scale-95 text-white py-2.5 rounded-lg text-xs font-medium transition-all">
+                Close Window
+            </button>
+        </div>
     </div>
+
+    <!-- WebSocket & Web Audio Orchestration Script -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id') || ('session-' + Math.random().toString(36).substring(2, 9));
+        const interviewId = urlParams.get('interview_id') || 'int-demo';
+
+        let ws = null;
+        let isMuted = false;
+        let secondsElapsed = 0;
+        let timerInterval = null;
+
+        // Visualizer Simulation / Real-time Bar update
+        const bars = [
+            document.getElementById('bar1'),
+            document.getElementById('bar2'),
+            document.getElementById('bar3'),
+            document.getElementById('bar4'),
+            document.getElementById('bar5')
+        ];
+
+        function animateBars(speaking) {
+            bars.forEach((bar, idx) => {
+                if (speaking && !isMuted) {
+                    const h = Math.floor(Math.random() * 38) + 10;
+                    bar.style.height = `${h}px`;
+                    bar.className = 'v-bar bg-primary-ondark';
+                } else {
+                    bar.style.height = '12px';
+                    bar.className = 'v-bar bg-dark-muted';
+                }
+            });
+        }
+        setInterval(() => {
+            if (!isMuted) animateBars(Math.random() > 0.4);
+        }, 120);
+
+        // Timer
+        timerInterval = setInterval(() => {
+            secondsElapsed++;
+            const m = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const s = String(secondsElapsed % 60).padStart(2, '0');
+            document.getElementById('elapsedTimer').textContent = `${m}:${s}`;
+        }, 1000);
+
+        // Connect WebSocket
+        function connectWS() {
+            const loc = window.location;
+            const wsProtocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//${loc.host}/api/v1/realtime/interview/${sessionId}?interview_id=${interviewId}`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                document.getElementById('connectionStatus').innerHTML = `
+                    <i class="ph-fill ph-circle text-[8px] text-emerald-400"></i>
+                    <span class="font-mono text-[11px] text-emerald-400">LIVE</span>
+                `;
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleServerMessage(data);
+            };
+
+            ws.onclose = () => {
+                document.getElementById('connectionStatus').innerHTML = `
+                    <i class="ph-fill ph-circle text-[8px] text-amber-400"></i>
+                    <span class="font-mono text-[11px] text-amber-400">RECONNECTING</span>
+                `;
+                setTimeout(connectWS, 2500);
+            };
+        }
+
+        function handleServerMessage(msg) {
+            const transcriptFeed = document.getElementById('transcriptFeed');
+
+            if (msg.type === 'ai_response') {
+                document.getElementById('aiPromptHeading').textContent = `"${msg.text}"`;
+                appendTranscript('AI', msg.text);
+                updateState('Speaking', 'Autergo is asking a question...', 'ph-waveform', 'text-primary-ondark');
+            } else if (msg.type === 'transcript_partial') {
+                appendTranscript('CANDIDATE', msg.text);
+            } else if (msg.type === 'state_change') {
+                document.getElementById('currentStageText').textContent = msg.new_state;
+                if (msg.competency) {
+                    document.getElementById('competencyTag').textContent = msg.competency.toUpperCase();
+                }
+            } else if (msg.type === 'interrupted') {
+                updateState('Interrupted', 'Candidate took the floor (barge-in)', 'ph-hand-palm', 'text-amber-400');
+            } else if (msg.type === 'complete') {
+                clearInterval(timerInterval);
+                document.getElementById('finalDuration').textContent = document.getElementById('elapsedTimer').textContent;
+                document.getElementById('completeModal').classList.remove('hidden');
+            } else if (msg.type === 'error') {
+                alert(`Notice: ${msg.message}`);
+            }
+        }
+
+        function appendTranscript(speaker, text) {
+            const feed = document.getElementById('transcriptFeed');
+            const row = document.createElement('div');
+            const color = speaker === 'AI' ? 'text-primary-ondark' : 'text-emerald-400';
+            row.innerHTML = `<span class="${color} font-semibold">[${speaker}]:</span> <span class="text-white">${text}</span>`;
+            feed.appendChild(row);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        function updateState(label, description, iconClass, colorClass) {
+            document.getElementById('stateText').textContent = `${label} — ${description}`;
+            const icon = document.getElementById('stateIcon');
+            icon.className = `ph-bold ${iconClass} ${colorClass} text-base`;
+        }
+
+        // Send User Answer
+        function submitCandidateAnswer(text) {
+            if (!text.trim() || !ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({
+                type: 'candidate_answer',
+                text: text.trim()
+            }));
+            updateState('Listening', 'Candidate speech received, synthesizing follow-up...', 'ph-dots-three-circle', 'text-primary-ondark');
+            document.getElementById('manualInput').value = '';
+        }
+
+        document.getElementById('sendAnswerBtn').addEventListener('click', () => {
+            submitCandidateAnswer(document.getElementById('manualInput').value);
+        });
+
+        document.getElementById('manualInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                submitCandidateAnswer(document.getElementById('manualInput').value);
+            }
+        });
+
+        // Controls
+        document.getElementById('interruptBtn').addEventListener('click', () => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'interrupt', timestamp: Date.now() }));
+            }
+        });
+
+        document.getElementById('muteBtn').addEventListener('click', () => {
+            isMuted = !isMuted;
+            const icon = document.getElementById('muteIcon');
+            const txt = document.getElementById('muteText');
+            if (isMuted) {
+                icon.className = 'ph-bold ph-microphone-slash text-base text-red-400';
+                txt.textContent = 'Unmute Mic';
+            } else {
+                icon.className = 'ph-bold ph-microphone text-base text-emerald-400';
+                txt.textContent = 'Mute Mic';
+            }
+        });
+
+        document.getElementById('finishBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to conclude the interview and submit your evaluation?')) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'finish' }));
+                }
+            }
+        });
+
+        // Initialize connection
+        connectWS();
+    </script>
 </body>
 </html>
