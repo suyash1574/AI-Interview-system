@@ -46,3 +46,9 @@
 | 2026-10-04 | 2.4.0 | TASK-AUTH-002 | Clerk React SDK integration in main.jsx and RecruiterLogin.jsx | `frontend/package.json`, `frontend/src/main.jsx`, `frontend/src/pages/RecruiterLogin.jsx` | COMPLETED |
 | 2026-10-04 | 2.4.0 | TASK-ENV-001 | Comprehensive .env.example and local .env file covering all 10 subsystems | `.env.example`, `.env`, `backend/config.py` | COMPLETED |
 | 2026-10-04 | 2.4.0 | TASK-DASH-002 | Connected RecruiterDashboard to live Jobs and Drives APIs | `frontend/src/pages/RecruiterDashboard.jsx` | COMPLETED |
+| 2026-10-04 | 2.5.0 | TASK-SMTP-001 | Standard SMTP transactional email dispatch with STARTTLS/SSL and Resend fallback | `backend/core/services/email.py`, `backend/config.py`, `.env.example`, `tests/unit/test_smtp_email.py` | COMPLETED |
+| 2026-10-04 | 2.5.0 | TASK-NVIDIA-001 | NVIDIA NIM LLM provider adapter supporting chat completions and structured eval | `backend/providers/nvidia_adapter.py`, `backend/providers/nvidia.py`, `tests/unit/test_nvidia_adapter.py` | COMPLETED |
+| 2026-10-04 | 2.5.0 | TASK-VOX-005 | Hugging Face zero-cost lightweight audio STT whisper-tiny and TTS providers | `backend/providers/hf_audio_adapter.py`, `backend/providers/huggingface.py`, `realtime/agent_worker.py`, `tests/unit/test_hf_audio_adapter.py` | COMPLETED |
+| 2026-10-04 | 2.5.0 | TASK-REP-002 | Dedicated candidate evaluation ReportDetailPage with integrity meter and PDF export | `frontend/src/pages/ReportDetailPage.jsx`, `frontend/src/App.jsx`, `frontend/src/pages/RecruiterDashboard.jsx`, `frontend/src/api/client.js` | COMPLETED |
+| 2026-10-04 | 2.5.0 | TASK-AUTH-003 | Clerk SignIn auth integration and demo login toggle | `frontend/src/pages/RecruiterLogin.jsx`, `backend/main.py` | COMPLETED |
+

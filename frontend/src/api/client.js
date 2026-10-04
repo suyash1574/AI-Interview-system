@@ -148,5 +148,23 @@ export const api = {
     });
     if (!res.ok) throw new Error(`Failed to upload resume: HTTP ${res.status}`);
     return await res.json();
+  },
+
+  // Reports
+  async getReport(interviewId) {
+    try {
+      const res = await fetch(`${BASE_URL}/reports/${interviewId}`, {
+        headers: getAuthHeaders()
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      console.warn('API getReport failed:', e);
+      return null;
+    }
+  },
+
+  getReportPdfUrl(interviewId) {
+    return `${BASE_URL}/reports/${interviewId}/pdf`;
   }
 };

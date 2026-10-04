@@ -16,10 +16,17 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Autergo API", version="1.0.0")
 
+from backend.config import settings
+
 # 1. CORS middleware for local Vite dev server and production clients
+allowed_origins_list = (
+    [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
+    if settings.ALLOWED_ORIGINS and settings.ALLOWED_ORIGINS != "*"
+    else ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "*"]
+)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

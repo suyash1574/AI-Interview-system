@@ -82,10 +82,28 @@ async def persist_evaluation_to_db(interview_id: str, result_dict: Dict[str, Any
                 raw_output=comm,
             ))
 
+            # Calculate and persist integrity score from logged integrity events
+            from database.models import IntegrityEvent
+            events_stmt = select(IntegrityEvent).where(IntegrityEvent.interview_id == interview_id)
+            events_res = await db.execute(events_stmt)
+            events = events_res.scalars().all()
+            high_count = sum(1 for e in events if e.severity == "HIGH")
+            med_count = sum(1 for e in events if e.severity == "MEDIUM")
+            integrity = max(0.0, round(1.0 - (high_count * 0.15) - (med_count * 0.05), 2))
+            interview.integrity_score = integrity
+
+            # Query real recruiter email for notification
+            recruiter_email = "recruiter@autergo.com"
+            user_stmt = select(User).where(User.tenant_id == tenant_id)
+            user_res = await db.execute(user_stmt)
+            recruiter_user = user_res.scalars().first()
+            if recruiter_user and recruiter_user.email:
+                recruiter_email = recruiter_user.email
+
             # Update interview status
             interview.status = "COMPLETED"
             await db.commit()
-            logger.info(f"Successfully persisted Evaluation {eval_id} and 3 AgentRuns for interview {interview_id}")
+            logger.info(f"Successfully persisted Evaluation {eval_id} and 3 AgentRuns for interview {interview_id}. Integrity Score: {integrity}")
 
             # 4. Trigger Report Generation & Email Dispatch
             try:
@@ -97,8 +115,9 @@ async def persist_evaluation_to_db(interview_id: str, result_dict: Dict[str, Any
                         "confidence_score": 0.92,
                         "evidence": result_dict["aggregated_evidence"],
                         "strength": tech["strength"],
+                        "integrity_score": integrity,
                     },
-                    recruiter_email="recruiter@autergo.com"
+                    recruiter_email=recruiter_email
                 )
             except Exception as report_err:
                 logger.info(f"Celery report dispatch deferred ({report_err})")
@@ -115,13 +134,24 @@ def evaluate_interview_task(interview_id: str, transcript: str):
     result = orchestrator.evaluate_interview_sync(interview_id, transcript)
     result_dict = result.model_dump()
 
-    # Persist to database if not in unit test environment
+    # Persist to database with safe event loop management
     import os
     if not os.environ.get("PYTEST_CURRENT_TEST"):
         try:
-            asyncio.run(asyncio.wait_for(persist_evaluation_to_db(interview_id, result_dict), timeout=2.0))
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_closed():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+
+            loop.run_until_complete(
+                asyncio.wait_for(persist_evaluation_to_db(interview_id, result_dict), timeout=30.0)
+            )
         except Exception as db_err:
-            logger.warning(f"Async persistence wrapper encountered: {db_err}")
+            logger.warning(f"Evaluation DB persistence wrapper encountered: {db_err}")
 
     logger.info(f"Completed multi-agent evaluation for {interview_id}. Overall Score: {result.overall_score} ({result.recommendation})")
     return result_dict

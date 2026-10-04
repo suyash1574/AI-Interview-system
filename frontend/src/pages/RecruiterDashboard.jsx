@@ -495,9 +495,9 @@ export default function RecruiterDashboard() {
                           </td>
                           <td className="py-3 px-4 text-right space-x-3">
                             {c.status === 'COMPLETED' ? (
-                              <button onClick={() => setActiveTab('reports')} className="text-primary hover:underline font-medium">
-                                View Scorecard
-                              </button>
+                              <Link to={`/reports/${c.id}`} className="text-primary hover:underline font-medium">
+                                View Scorecard &rarr;
+                              </Link>
                             ) : (
                               <Link to={c.sessionUrl} target="_blank" className="text-primary hover:underline font-medium inline-flex items-center gap-1">
                                 <span>Session Link</span>
@@ -529,9 +529,13 @@ export default function RecruiterDashboard() {
                     <p className="text-xs text-ink-muted">Evidence-backed evaluation report for Jane Doe (Senior Backend Engineer).</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button className="border border-border hover:bg-canvas-subtle px-3 py-1.5 rounded-lg text-xs font-medium">
+                    <Link to="/reports/cand-1" className="border border-border hover:bg-canvas-subtle px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1">
+                      <span>Full Scorecard View</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </Link>
+                    <a href={api.getReportPdfUrl('int-1')} target="_blank" rel="noopener noreferrer" className="border border-border hover:bg-canvas-subtle px-3 py-1.5 rounded-lg text-xs font-medium">
                       Download PDF
-                    </button>
+                    </a>
                     <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
                       Advance Candidate
                     </button>

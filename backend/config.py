@@ -27,6 +27,24 @@ class Settings(BaseSettings):
 
     RESEND_FROM_EMAIL: str = "interviews@autergo.com"
 
+    # Standard SMTP Email Configuration
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_USE_TLS: bool = True
+    SMTP_FROM_EMAIL: str = "interviews@autergo.com"
+
+    # NVIDIA NIM LLM Configuration
+    NVIDIA_API_KEY: str = ""
+    NVIDIA_MODEL: str = "meta/llama-3.3-70b-instruct"
+
+    # Hugging Face Free Zero-Cost Audio Configuration
+    HF_API_TOKEN: str = ""
+    HF_WHISPER_MODEL: str = "openai/whisper-tiny"
+    AUDIO_PROVIDER: str = "auto"
+    LLM_PROVIDER: str = "auto"
+
     R2_ACCOUNT_ID: str = ""
     R2_ACCESS_KEY_ID: str = ""
     R2_SECRET_ACCESS_KEY: str = ""

@@ -30,6 +30,7 @@ class LiveKitAgentWorker:
         competencies: Optional[List[str]] = None,
         candidate_name: str = "Candidate",
         resume_summary: str = "",
+        llm_provider: Optional[Any] = None,
     ):
         self.room_name = room_name
         self.interview_id = interview_id or room_name.replace("interview-", "")
@@ -40,7 +41,21 @@ class LiveKitAgentWorker:
 
         self.state_machine = InterviewStateMachine(interview_id=self.interview_id)
         self.security = LlamaGuardSecurity()
-        self.llm = GroqProvider()
+        
+        # Select LLM Provider: NVIDIA NIM, Groq, or explicit injection
+        if llm_provider is not None:
+            self.llm = llm_provider
+        elif getattr(settings, "LLM_PROVIDER", "auto") == "nvidia" or (settings.NVIDIA_API_KEY and not settings.GROQ_API_KEY):
+            from backend.providers.nvidia_adapter import NVIDIAProvider
+            self.llm = NVIDIAProvider()
+        else:
+            self.llm = GroqProvider()
+
+        # Select STT & TTS Providers (Deepgram/Cartesia or Free Hugging Face Voice)
+        from backend.providers.hf_audio_adapter import get_stt_provider, get_tts_provider
+        self.stt = get_stt_provider()
+        self.tts = get_tts_provider()
+
         self.transcript: List[Dict[str, Any]] = []
         self.is_active = False
 

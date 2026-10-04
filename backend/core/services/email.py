@@ -4,6 +4,10 @@ import httpx
 from pydantic import BaseModel, EmailStr
 from backend.config import settings
 
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 logger = logging.getLogger(__name__)
 
 class EmailMessage(BaseModel):
@@ -14,39 +18,96 @@ class EmailMessage(BaseModel):
 
 class EmailDispatcher:
     """
-    Email notification dispatcher using Resend REST API (https://api.resend.com/emails).
-    Gracefully falls back to logged simulation during local and test runs when RESEND_API_KEY is not configured.
+    Email notification dispatcher supporting:
+    1. Standard SMTP (Zero-cost, works with Gmail, Sendgrid SMTP, or any corporate mail server).
+    2. Resend REST API (https://api.resend.com/emails) as secondary fallback.
+    3. Graceful logged simulation during local development and testing.
     """
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        smtp_host: Optional[str] = None,
+        smtp_port: Optional[int] = None,
+        smtp_username: Optional[str] = None,
+        smtp_password: Optional[str] = None,
+        smtp_use_tls: Optional[bool] = None,
+        from_email: Optional[str] = None,
+    ):
         self.api_key = api_key or settings.RESEND_API_KEY or "mock_resend_key"
-        self.from_email = "Autergo Interviews <no-reply@autergo.com>"
+        self.smtp_host = smtp_host if smtp_host is not None else settings.SMTP_HOST
+        self.smtp_port = smtp_port if smtp_port is not None else settings.SMTP_PORT
+        self.smtp_username = smtp_username if smtp_username is not None else settings.SMTP_USERNAME
+        self.smtp_password = smtp_password if smtp_password is not None else settings.SMTP_PASSWORD
+        self.smtp_use_tls = smtp_use_tls if smtp_use_tls is not None else settings.SMTP_USE_TLS
+        self.from_email = from_email or settings.SMTP_FROM_EMAIL or "Autergo Interviews <no-reply@autergo.com>"
+
+    def _send_smtp_email(self, to_email: str, subject: str, html_body: str, text_body: str) -> bool:
+        """Dispatches email via standard SMTP protocol with STARTTLS/SSL."""
+        try:
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = self.from_email
+            msg["To"] = to_email
+
+            part1 = MIMEText(text_body, "plain", "utf-8")
+            part2 = MIMEText(html_body, "html", "utf-8")
+            msg.attach(part1)
+            msg.attach(part2)
+
+            if self.smtp_port == 465:
+                server = smtplib.SMTP_SSL(self.smtp_host, self.smtp_port, timeout=10.0)
+            else:
+                server = smtplib.SMTP(self.smtp_host, self.smtp_port, timeout=10.0)
+                if self.smtp_use_tls:
+                    server.starttls()
+
+            if self.smtp_username and self.smtp_password:
+                server.login(self.smtp_username, self.smtp_password)
+
+            server.send_message(msg)
+            server.quit()
+            logger.info(f"Successfully dispatched email via SMTP ({self.smtp_host}) to {to_email}")
+            return True
+        except Exception as e:
+            logger.error(f"SMTP dispatch to {to_email} failed: {e}")
+            return False
+
+    def _send_email(self, to_email: str, subject: str, html_body: str, text_body: str) -> bool:
+        """Routes email to SMTP, Resend, or local simulation based on configuration."""
+        # 1. Prefer standard SMTP if host is configured
+        if self.smtp_host and self.smtp_host.strip():
+            return self._send_smtp_email(to_email, subject, html_body, text_body)
+
+        # 2. Resend REST API if valid API key is present
+        if self.api_key and not self.api_key.startswith("mock_") and not self.api_key == "re_placeholder":
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "from": self.from_email,
+                "to": [to_email],
+                "subject": subject,
+                "html": html_body,
+                "text": text_body
+            }
+            try:
+                with httpx.Client(timeout=10.0) as client:
+                    res = client.post("https://api.resend.com/emails", headers=headers, json=payload)
+                    res.raise_for_status()
+                    logger.info(f"Successfully dispatched email via Resend to {to_email}")
+                    return True
+            except Exception as e:
+                logger.error(f"Resend email dispatch failed to {to_email}: {e}")
+                return False
+
+        # 3. Fallback simulation (Dev / Local / Mock)
+        logger.info(f"[SIMULATED EMAIL] To: {to_email} | Subject: {subject} | Body: {text_body[:80]}...")
+        return True
 
     def _send_resend_email(self, to_email: str, subject: str, html_body: str, text_body: str) -> bool:
-        if not self.api_key or self.api_key.startswith("mock_"):
-            logger.info(f"[SIMULATED EMAIL] To: {to_email} | Subject: {subject} | Body: {text_body[:80]}...")
-            return True
-
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        payload = {
-            "from": self.from_email,
-            "to": [to_email],
-            "subject": subject,
-            "html": html_body,
-            "text": text_body
-        }
-
-        try:
-            with httpx.Client(timeout=10.0) as client:
-                res = client.post("https://api.resend.com/emails", headers=headers, json=payload)
-                res.raise_for_status()
-                logger.info(f"Successfully dispatched email via Resend to {to_email}")
-                return True
-        except Exception as e:
-            logger.error(f"Resend email dispatch failed to {to_email}: {e}")
-            return False
+        """Backward-compatible alias for existing callers."""
+        return self._send_email(to_email, subject, html_body, text_body)
 
     def send_report_notification(self, recipient_email: str, candidate_name: str, score: int, report_url: str) -> bool:
         subject = f"Interview Evaluation Ready: {candidate_name} (Score: {score}/100)"
@@ -66,7 +127,7 @@ class EmailDispatcher:
             <p style="color: #94a3b8; font-size: 12px; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px;">Autergo Autonomous AI Interview System</p>
         </div>
         """
-        return self._send_resend_email(recipient_email, subject, html_body, text_body)
+        return self._send_email(recipient_email, subject, html_body, text_body)
 
     def send_invitation(self, recipient_email: str, candidate_name: str, job_title: str, interview_link: str, expires_in_days: int = 7) -> bool:
         subject = f"Invitation: AI Technical Interview for {job_title} at Autergo"
@@ -86,4 +147,4 @@ class EmailDispatcher:
             <p style="color: #94a3b8; font-size: 12px; margin-top: 32px; border-top: 1px solid #e2e8f0; padding-top: 16px;">Autergo Autonomous AI Interview System</p>
         </div>
         """
-        return self._send_resend_email(recipient_email, subject, html_body, text_body)
+        return self._send_email(recipient_email, subject, html_body, text_body)
