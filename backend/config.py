@@ -17,6 +17,15 @@ class Settings(BaseSettings):
 
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
+    REDIS_URL: str = "redis://localhost:6379/0"
+
+    APP_PORT: int = 8000
+    ALLOWED_ORIGINS: str = "*"
+
+    CLERK_SECRET_KEY: str = ""
+    CLERK_PUBLISHABLE_KEY: str = ""
+
+    RESEND_FROM_EMAIL: str = "interviews@autergo.com"
 
     R2_ACCOUNT_ID: str = ""
     R2_ACCESS_KEY_ID: str = ""
@@ -26,5 +35,6 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 settings = Settings()

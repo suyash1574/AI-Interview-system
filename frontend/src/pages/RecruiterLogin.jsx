@@ -3,13 +3,18 @@ import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { ShieldCheck, ArrowRight, Lock, Mail } from 'lucide-react';
 
+import { SignIn } from '@clerk/clerk-react';
+
 export default function RecruiterLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('recruiter@acme.com');
   const [password, setPassword] = useState('••••••••••••');
+  const clerkPubKey = typeof window !== 'undefined' ? (window.ENV?.CLERK_PUBLISHABLE_KEY || '') : '';
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    localStorage.setItem('autergo_token', 'dev_recruiter_jwt_token');
+    localStorage.setItem('autergo_user_email', email);
     navigate('/dashboard');
   };
 

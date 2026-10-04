@@ -39,9 +39,13 @@ class User(Base):
     __tablename__ = "users"
     id = Column(String, primary_key=True, default=generate_uuid)
     tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    clerk_id = Column(String, unique=True, index=True, nullable=True)
     email = Column(String, nullable=False)
+    email_verified = Column(Boolean, nullable=False, default=False)
     name = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
     role = Column(String, nullable=False, default="RECRUITER") # SUPER_ADMIN, COMPANY_ADMIN, RECRUITER
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), default=get_utc_now)
 
     tenant = relationship("Tenant", back_populates="users")
@@ -127,6 +131,8 @@ class Interview(Base):
     resume_id = Column(String, ForeignKey("resumes.id"), nullable=True)
     status = Column(String, nullable=False, default="PENDING") # PENDING, IN_PROGRESS, COMPLETED, FAILED
     transcript = Column(JSONB, nullable=True, default=list) # [{"speaker": "AI"|"CANDIDATE", "text": "...", "timestamp": ...}]
+    duration_minutes = Column(Integer, nullable=False, default=30)
+    integrity_score = Column(Float, nullable=False, default=1.0) # 0.0 to 1.0
     created_at = Column(DateTime(timezone=True), default=get_utc_now)
 
     job = relationship("Job", back_populates="interviews")
@@ -215,4 +221,24 @@ class Notification(Base):
     type = Column(String, nullable=False, default="INFO") # INFO, SUCCESS, WARNING, ALERT
     is_read = Column(Boolean, nullable=False, default=False)
     link = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now)
+
+class InterviewTemplate(Base):
+    __tablename__ = "interview_templates"
+    id = Column(String, primary_key=True, default=generate_uuid)
+    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    name = Column(String, nullable=False)
+    role_title = Column(String, nullable=False)
+    competencies = Column(JSONB, nullable=False, default=list)
+    duration_minutes = Column(Integer, nullable=False, default=30)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now)
+
+class UsageRecord(Base):
+    __tablename__ = "usage_records"
+    id = Column(String, primary_key=True, default=generate_uuid)
+    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    interview_id = Column(String, nullable=True)
+    minutes_consumed = Column(Float, nullable=False, default=0.0)
+    model_tokens_used = Column(Integer, nullable=False, default=0)
+    cost_estimate_usd = Column(Float, nullable=False, default=0.0)
     created_at = Column(DateTime(timezone=True), default=get_utc_now)

@@ -40,3 +40,9 @@
 | 2026-10-04 | 2.3.0 | TASK-INV-003 | Candidate token verification endpoint and checkin screen wiring | `backend/api/v1/invitations.py`, `frontend/src/pages/CandidateCheckin.jsx`, `tests/unit/test_invitations.py` | COMPLETED |
 | 2026-10-04 | 2.3.0 | TASK-DRV-003 | Recruiter Drive management and bulk CSV invite screens | `frontend/src/pages/DriveListPage.jsx`, `frontend/src/pages/DriveCreatePage.jsx`, `frontend/src/App.jsx` | COMPLETED |
 | 2026-10-04 | 2.3.0 | TASK-DOCK-001 | Updated docker-compose.yml with Celery worker and Voice Agent services | `docker-compose.yml` | COMPLETED |
+| 2026-10-04 | 2.4.0 | TASK-REQ-002 | Added websockets to requirements.txt for real-time streaming STT and TTS | `requirements.txt` | COMPLETED |
+| 2026-10-04 | 2.4.0 | TASK-VOX-004 | Connected LiveKit Agent entrypoint to DB context and user_speech_committed loop | `realtime/agent_worker.py`, `tests/unit/test_agent_worker.py` | COMPLETED |
+| 2026-10-04 | 2.4.0 | TASK-MIG-003 | Alembic migration 0004 for clerk_id interview metrics templates and usage tables | `database/migrations/versions/0004_add_clerk_and_interview_columns.py`, `database/models.py`, `tests/unit/test_migrations.py` | COMPLETED |
+| 2026-10-04 | 2.4.0 | TASK-AUTH-002 | Clerk React SDK integration in main.jsx and RecruiterLogin.jsx | `frontend/package.json`, `frontend/src/main.jsx`, `frontend/src/pages/RecruiterLogin.jsx` | COMPLETED |
+| 2026-10-04 | 2.4.0 | TASK-ENV-001 | Comprehensive .env.example and local .env file covering all 10 subsystems | `.env.example`, `.env`, `backend/config.py` | COMPLETED |
+| 2026-10-04 | 2.4.0 | TASK-DASH-002 | Connected RecruiterDashboard to live Jobs and Drives APIs | `frontend/src/pages/RecruiterDashboard.jsx` | COMPLETED |

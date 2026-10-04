@@ -9,6 +9,8 @@ def test_alembic_migrations_chain():
     assert "0001" in revisions
     assert "0002" in revisions
     assert "0003" in revisions
-    assert revisions[0] == "0003"
-    assert revisions[1] == "0002"
-    assert revisions[2] == "0001"
+    assert "0004" in revisions
+    assert revisions[0] == "0004"
+    assert revisions[1] == "0003"
+    assert revisions[2] == "0002"
+    assert revisions[3] == "0001"

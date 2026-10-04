@@ -77,16 +77,39 @@ export default function RecruiterDashboard() {
   // Fetch real data on mount
   useEffect(() => {
     async function loadData() {
-      const fetchedJobs = await api.getJobs();
-      if (fetchedJobs && fetchedJobs.length > 0) {
-        setJobs(fetchedJobs.map(j => ({
-          id: j.id,
-          title: j.title,
-          competencies: Array.isArray(j.competencies) ? j.competencies.map(c => typeof c === 'string' ? c : c.name || 'Skill') : ['General Aptitude'],
-          status: 'ACTIVE',
-          candidatesCount: 1,
-        })));
-        setSelectedJobId(fetchedJobs[0].id);
+      try {
+        const [fetchedJobs, fetchedDrives] = await Promise.all([
+          api.getJobs(),
+          api.getDrives()
+        ]);
+
+        if (fetchedJobs && fetchedJobs.length > 0) {
+          setJobs(fetchedJobs.map(j => ({
+            id: j.id,
+            title: j.title,
+            competencies: Array.isArray(j.competencies) 
+              ? j.competencies.map(c => typeof c === 'string' ? c : c.name || 'Skill') 
+              : ['General Aptitude'],
+            status: 'ACTIVE',
+            candidatesCount: j.candidatesCount || 0,
+          })));
+          setSelectedJobId(fetchedJobs[0].id);
+        }
+
+        if (fetchedDrives && fetchedDrives.length > 0) {
+          const driveCandidates = fetchedDrives.map(d => ({
+            id: `cand-${d.id}`,
+            name: `${d.name} Candidate Pool`,
+            email: 'batch-onboarding@autergo.com',
+            role: d.name,
+            status: d.completed_count > 0 ? 'COMPLETED' : 'IN_PROGRESS',
+            score: d.pass_threshold,
+            sessionUrl: '/drives',
+          }));
+          setCandidates(prev => [...driveCandidates, ...prev]);
+        }
+      } catch (err) {
+        console.warn('Dashboard live data fetch:', err);
       }
     }
     loadData();

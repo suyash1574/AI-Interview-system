@@ -158,6 +158,52 @@ class LiveKitAgentWorker:
         }
 
 
+async def load_interview_context(interview_id: str) -> Dict[str, Any]:
+    """Loads interview candidate, target job competencies, and resume summary from DB."""
+    context = {
+        "candidate_name": "Candidate",
+        "job_title": "Senior Backend Engineer",
+        "competencies": ["System Design", "Distributed Systems", "Algorithms"],
+        "resume_summary": "Experienced engineer with backend background."
+    }
+    try:
+        from database.session import AsyncSessionLocal
+        from database.models import Interview, Job, Candidate, Resume
+        from sqlalchemy import select
+
+        async with AsyncSessionLocal() as db:
+            stmt = select(Interview).where(Interview.id == interview_id)
+            res = await db.execute(stmt)
+            interview = res.scalar_one_or_none()
+            if interview:
+                if interview.candidate_id:
+                    cand_res = await db.execute(select(Candidate).where(Candidate.id == interview.candidate_id))
+                    cand = cand_res.scalar_one_or_none()
+                    if cand and cand.name:
+                        context["candidate_name"] = cand.name
+
+                if interview.job_id:
+                    job_res = await db.execute(select(Job).where(Job.id == interview.job_id))
+                    job = job_res.scalar_one_or_none()
+                    if job and job.title:
+                        context["job_title"] = job.title
+                        if job.competencies and isinstance(job.competencies, list):
+                            comp_names = [c.get("name") for c in job.competencies if isinstance(c, dict) and "name" in c]
+                            if comp_names:
+                                context["competencies"] = comp_names
+
+                if interview.resume_id:
+                    resume_res = await db.execute(select(Resume).where(Resume.id == interview.resume_id))
+                    resume = resume_res.scalar_one_or_none()
+                    if resume and resume.parsed_text:
+                        preview = " ".join(resume.parsed_text.split()[:40])
+                        context["resume_summary"] = f"Candidate Background: {preview}"
+    except Exception as e:
+        logger.warning(f"Could not load DB context for interview {interview_id} ({e}), using default context.")
+
+    return context
+
+
 # LiveKit Agent SDK Entrypoint for worker process
 async def entrypoint(ctx: Any):
     """
@@ -172,8 +218,19 @@ async def entrypoint(ctx: Any):
     logger.info(f"Connecting to LiveKit room: {ctx.room.name}")
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
-    worker = LiveKitAgentWorker(room_name=ctx.room.name)
-    logger.info(f"LiveKitAgentWorker initialized for room {ctx.room.name}")
+    # Extract interview ID and load DB context
+    interview_id = ctx.room.name.replace("interview-", "")
+    ctx_data = await load_interview_context(interview_id)
+
+    worker = LiveKitAgentWorker(
+        room_name=ctx.room.name,
+        interview_id=interview_id,
+        job_title=ctx_data["job_title"],
+        competencies=ctx_data["competencies"],
+        candidate_name=ctx_data["candidate_name"],
+        resume_summary=ctx_data["resume_summary"],
+    )
+    logger.info(f"LiveKitAgentWorker initialized for {worker.candidate_name} ({worker.job_title})")
 
     # Initialize Voice Pipeline components
     try:
@@ -215,6 +272,31 @@ async def entrypoint(ctx: Any):
         await session.say(greeting)
     except Exception as e:
         logger.info(f"Voice output simulated ({e}): {greeting}")
+
+    # Wire candidate speech turn handling into adaptive interview FSM
+    async def on_candidate_speech_turn(transcribed_text: str):
+        if not transcribed_text or not transcribed_text.strip():
+            return
+        logger.info(f"Candidate voice turn received: '{transcribed_text}'")
+        result = await worker.handle_user_speech(transcribed_text)
+        reply = result.get("ai_text")
+        if reply:
+            try:
+                await session.say(reply)
+            except Exception as e:
+                logger.info(f"Voice reply output ({e}): {reply}")
+
+        if result.get("is_complete"):
+            logger.info("Interview finished all phases, completing session.")
+            await worker.complete_session()
+
+    try:
+        @session.on("user_speech_committed")
+        def on_user_speech(msg):
+            text = getattr(msg, "content", None) or getattr(msg, "text", None) or str(msg)
+            asyncio.create_task(on_candidate_speech_turn(text))
+    except Exception as e:
+        logger.warning(f"Could not bind user_speech_committed event listener: {e}")
 
     # Listen for participant disconnection to finalize interview and dispatch Celery evaluation
     @ctx.room.on("participant_disconnected")

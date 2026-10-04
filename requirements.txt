@@ -21,3 +21,4 @@ livekit-agents>=0.8.0
 livekit-plugins-silero>=0.8.0
 livekit-plugins-deepgram>=0.8.0
 livekit-plugins-cartesia>=0.8.0
+websockets>=12.0
