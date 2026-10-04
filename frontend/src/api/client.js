@@ -125,6 +125,12 @@ export const api = {
     return await res.json();
   },
 
+  async verifyToken(token) {
+    const res = await fetch(`${BASE_URL}/invitations/verify/${token}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  },
+
   // Resumes
   async uploadResume(candidateId, interviewId, file) {
     const formData = new FormData();

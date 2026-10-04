@@ -13,6 +13,24 @@ export default function CandidateCheckin() {
   const [micStatus, setMicStatus] = useState('Click to test');
   const [micVerified, setMicVerified] = useState(false);
   const [quietConfirmed, setQuietConfirmed] = useState(false);
+  const [invitationData, setInvitationData] = useState(null);
+
+  React.useEffect(() => {
+    async function checkToken() {
+      if (token && token !== 'guest-demo') {
+        try {
+          const res = await fetch(`/api/v1/invitations/verify/${token}`);
+          if (res.ok) {
+            const data = await res.json();
+            setInvitationData(data);
+          }
+        } catch (e) {
+          console.warn('Token verify fallback', e);
+        }
+      }
+    }
+    checkToken();
+  }, [token]);
 
   const testMicrophone = async () => {
     try {
@@ -73,15 +91,17 @@ export default function CandidateCheckin() {
               <span className="text-[11px] font-mono uppercase tracking-wider text-primary bg-primary-subtle px-2.5 py-1 rounded-full font-semibold">
                 Technical Screening
               </span>
-              <h1 className="text-2xl font-semibold text-ink tracking-tight mt-3">Welcome to your interview</h1>
+              <h1 className="text-2xl font-semibold text-ink tracking-tight mt-3">
+                {invitationData ? `Welcome, ${invitationData.candidate_name}` : 'Welcome to your interview'}
+              </h1>
               <p className="text-xs text-ink-muted mt-1 leading-relaxed">
-                You have been invited to complete a live voice assessment. The session is dynamic, adaptive, and evidence-driven.
+                {invitationData ? `Assessment for ${invitationData.drive_name}. The session is dynamic, adaptive, and evidence-driven.` : 'You have been invited to complete a live voice assessment. The session is dynamic, adaptive, and evidence-driven.'}
               </p>
 
               <div className="bg-canvas-subtle border border-border rounded-lg p-4 my-6 text-xs space-y-2 font-mono">
-                <div className="flex justify-between"><span className="text-ink-muted">Target Position:</span> <span class="font-semibold text-ink">Senior Backend Engineer</span></div>
-                <div className="flex justify-between"><span className="text-ink-muted">Session Duration:</span> <span class="text-ink">15–25 minutes</span></div>
-                <div className="flex justify-between"><span className="text-ink-muted">Encryption:</span> <span class="text-emerald-600">TLS End-to-End</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Target Position:</span> <span className="font-semibold text-ink">{invitationData?.job_title || 'Senior Backend Engineer'}</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Session Duration:</span> <span className="text-ink">15–25 minutes</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Encryption:</span> <span className="text-emerald-600">TLS End-to-End</span></div>
               </div>
 
               <div className="space-y-3 mb-8 text-xs text-ink">

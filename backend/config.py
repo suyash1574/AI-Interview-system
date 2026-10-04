@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
 
+    R2_ACCOUNT_ID: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET_NAME: str = "autergo-storage"
+    R2_PUBLIC_URL: str = "https://storage.autergo.com"
+
     class Config:
         env_file = ".env"
 

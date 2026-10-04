@@ -8,5 +8,7 @@ def test_alembic_migrations_chain():
     revisions = [rev.revision for rev in script_dir.walk_revisions()]
     assert "0001" in revisions
     assert "0002" in revisions
-    assert revisions[0] == "0002"
-    assert revisions[1] == "0001"
+    assert "0003" in revisions
+    assert revisions[0] == "0003"
+    assert revisions[1] == "0002"
+    assert revisions[2] == "0001"

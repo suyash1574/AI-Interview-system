@@ -144,6 +144,10 @@ export default function VoiceInterviewShell() {
       }
     };
 
+    const handleWindowBlur = () => {
+      reportTelemetry('WINDOW_BLUR', 'LOW', { reason: 'window_focus_lost' });
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
     window.addEventListener('paste', handlePaste);

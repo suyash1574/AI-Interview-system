@@ -1,15 +1,40 @@
 version: '3.8'
+
 services:
   api:
     build: .
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://autergo:autergo@db:5432/autergo
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - db
       - redis
+
+  celery_worker:
+    build: .
+    command: celery -A workers.celery_app.celery_app worker --loglevel=info --concurrency=4
+    environment:
+      - DATABASE_URL=postgresql://autergo:autergo@db:5432/autergo
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - db
+      - redis
+
+  voice_agent:
+    build: .
+    command: python -m realtime.agent_worker dev
+    environment:
+      - LIVEKIT_URL=wss://livekit.autergo.com
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+
   db:
     image: postgres:15
     environment:
@@ -18,7 +43,13 @@ services:
       - POSTGRES_DB=autergo
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   redis:
     image: redis:7
     ports:
       - "6379:6379"
+
+volumes:
+  pgdata:

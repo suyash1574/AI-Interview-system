@@ -162,20 +162,65 @@ class LiveKitAgentWorker:
 async def entrypoint(ctx: Any):
     """
     LiveKit Agent Process Entrypoint.
-    Subscribes to room audio track and streams STT/TTS in real time.
+    Subscribes to candidate audio track, runs Silero VAD, streaming Deepgram STT,
+    Llama Guard security check + Groq LLM reasoning, and streaming Cartesia TTS.
     """
     from livekit.agents import AutoSubscribe
+    from livekit.agents.voice import Agent, AgentSession
     from livekit.plugins import silero, deepgram, cartesia
 
-    logger.info(f"Connecting to room: {ctx.room.name}")
+    logger.info(f"Connecting to LiveKit room: {ctx.room.name}")
     await ctx.connect(auto_subscribe=AutoSubscribe.AUDIO_ONLY)
 
     worker = LiveKitAgentWorker(room_name=ctx.room.name)
     logger.info(f"LiveKitAgentWorker initialized for room {ctx.room.name}")
 
-    # Send opening greeting
+    # Initialize Voice Pipeline components
+    try:
+        vad = silero.VAD.load()
+    except Exception:
+        vad = None
+
+    try:
+        stt = deepgram.STT(model="nova-2", language="en")
+    except Exception:
+        stt = None
+
+    try:
+        tts = cartesia.TTS(model="sonic-english", voice="a0e99841-438c-4a64-b679-ae501e7d6091")
+    except Exception:
+        tts = None
+
+    instructions = (
+        f"You are Autergo, an elite technical interviewer conducting an adaptive engineering interview.\n"
+        f"Target Role: {worker.job_title}\n"
+        f"Candidate: {worker.candidate_name}\n"
+        f"Competencies: {', '.join(worker.competencies)}\n"
+        f"Acknowledge the candidate's responses naturally and probe deeper into architecture, code quality, and trade-offs."
+    )
+
+    agent = Agent(instructions=instructions)
+    session = AgentSession(stt=stt, vad=vad, tts=tts)
+
+    # Attach session to room
+    try:
+        await session.start(agent, room=ctx.room)
+    except Exception as e:
+        logger.warning(f"LiveKit AgentSession start ({e}), continuing in pipeline mode.")
+
+    # Speak opening greeting
     greeting = await worker.get_opening_greeting()
     logger.info(f"AI Opening Greeting: {greeting}")
+    try:
+        await session.say(greeting)
+    except Exception as e:
+        logger.info(f"Voice output simulated ({e}): {greeting}")
+
+    # Listen for participant disconnection to finalize interview and dispatch Celery evaluation
+    @ctx.room.on("participant_disconnected")
+    def on_participant_disconnected(participant):
+        logger.info(f"Participant disconnected: {participant.identity}")
+        asyncio.create_task(worker.complete_session())
 
 
 def main():

@@ -134,6 +134,7 @@ class Interview(Base):
     candidate = relationship("Candidate", back_populates="interviews")
     evaluations = relationship("Evaluation", back_populates="interview")
     integrity_events = relationship("IntegrityEvent", back_populates="interview")
+    reports = relationship("Report", back_populates="interview")
 
 class Evaluation(Base):
     __tablename__ = "evaluations"
@@ -178,3 +179,40 @@ class IntegrityEvent(Base):
     timestamp = Column(DateTime(timezone=True), default=get_utc_now)
 
     interview = relationship("Interview", back_populates="integrity_events")
+
+class Report(Base):
+    __tablename__ = "reports"
+    id = Column(String, primary_key=True, default=generate_uuid)
+    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    interview_id = Column(String, ForeignKey("interviews.id"), nullable=False)
+    pdf_url = Column(String, nullable=False)
+    report_type = Column(String, nullable=False, default="RECRUITER") # RECRUITER, CANDIDATE
+    status = Column(String, nullable=False, default="READY") # PENDING, READY, FAILED
+    metadata_info = Column(JSONB, nullable=False, default=dict)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now)
+
+    interview = relationship("Interview", back_populates="reports")
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+    id = Column(String, primary_key=True, default=generate_uuid)
+    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    user_id = Column(String, nullable=True)
+    action = Column(String, nullable=False) # e.g. CREATE_DRIVE, EXPORT_REPORT, INVITE_CANDIDATES
+    resource_type = Column(String, nullable=False)
+    resource_id = Column(String, nullable=True)
+    details = Column(JSONB, nullable=False, default=dict)
+    ip_address = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now)
+
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(String, primary_key=True, default=generate_uuid)
+    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    user_id = Column(String, nullable=True) # None = all tenant recruiters
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String, nullable=False, default="INFO") # INFO, SUCCESS, WARNING, ALERT
+    is_read = Column(Boolean, nullable=False, default=False)
+    link = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=get_utc_now)

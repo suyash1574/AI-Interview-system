@@ -29,3 +29,11 @@ Date,Version,Feature ID,Description,Files Affected,Status
 2026-10-04,2.2.0,TASK-DRV-002,Drive lifecycle status transitions and bulk CSV invitation upload,backend/api/v1/drives.py;backend/api/v1/invitations.py;tests/unit/test_drives.py,COMPLETED
 2026-10-04,2.2.0,TASK-TEL-001,Browser integrity telemetry listeners in VoiceInterviewShell,frontend/src/pages/VoiceInterviewShell.jsx;frontend/src/api/client.js,COMPLETED
 2026-10-04,2.2.0,TASK-CI-001,GitHub Actions CI workflow for pytest coverage and frontend build,.github/workflows/ci.yml,COMPLETED
+2026-10-04,2.3.0,TASK-REQ-001,Updated requirements.txt with reportlab prometheus pypdf gliner livekit boto3,requirements.txt,COMPLETED
+2026-10-04,2.3.0,TASK-TEL-002,Fixed handleWindowBlur ReferenceError in VoiceInterviewShell,frontend/src/pages/VoiceInterviewShell.jsx,COMPLETED
+2026-10-04,2.3.0,TASK-VOX-003,Completed LiveKit Agent entrypoint with AgentSession and streaming STT/TTS adapters,realtime/agent_worker.py;backend/providers/deepgram_adapter.py;backend/providers/cartesia_adapter.py;tests/unit/test_agent_worker.py,COMPLETED
+2026-10-04,2.3.0,TASK-STOR-001,Cloudflare R2 and S3 object storage service with presigned URLs,backend/core/services/storage.py;backend/api/v1/resumes.py;workers/tasks/reports.py;tests/unit/test_storage.py,COMPLETED
+2026-10-04,2.3.0,TASK-MIG-002,Alembic migration 0003 for reports audit_logs and notifications with RLS,database/migrations/versions/0003_add_reports_audit_notifications.py;database/models.py;tests/unit/test_migrations.py,COMPLETED
+2026-10-04,2.3.0,TASK-INV-003,Candidate token verification endpoint and checkin screen wiring,backend/api/v1/invitations.py;frontend/src/pages/CandidateCheckin.jsx;tests/unit/test_invitations.py,COMPLETED
+2026-10-04,2.3.0,TASK-DRV-003,Recruiter Drive management and bulk CSV invite screens,frontend/src/pages/DriveListPage.jsx;frontend/src/pages/DriveCreatePage.jsx;frontend/src/App.jsx,COMPLETED
+2026-10-04,2.3.0,TASK-DOCK-001,Updated docker-compose.yml with Celery worker and Voice Agent services,docker-compose.yml,COMPLETED

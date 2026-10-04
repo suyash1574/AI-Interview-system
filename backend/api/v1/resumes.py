@@ -49,11 +49,19 @@ async def upload_resume(
         if cand:
             tenant_id = cand.tenant_id
 
+    from backend.core.services.storage import storage_service
+    file_url = storage_service.upload_bytes(
+        file_bytes,
+        f"resumes/{candidate_id}/{file.filename}",
+        file.content_type or "application/pdf"
+    )
+
     resume = Resume(
         id=resume_id,
         tenant_id=tenant_id,
         candidate_id=candidate_id,
         filename=file.filename,
+        file_url=file_url,
         parsed_text=parsed.raw_text,
         extracted_skills=parsed.skills,
         extracted_experience=[{"summary": parsed.summary}],

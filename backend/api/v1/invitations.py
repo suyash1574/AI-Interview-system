@@ -137,3 +137,69 @@ async def resend_invitation(
         status=inv.status,
         token=inv.token,
     )
+
+class TokenVerifyResponse(BaseModel):
+    valid: bool
+    invitation_id: str
+    candidate_id: str
+    candidate_name: str
+    candidate_email: str
+    drive_id: str
+    drive_name: str
+    job_title: str
+    status: str
+    expires_at: Optional[str] = None
+
+@router.get("/verify/{token}", response_model=TokenVerifyResponse)
+@router.get("/validate", response_model=TokenVerifyResponse)
+async def verify_invitation_token(
+    token: Optional[str] = None,
+    db: AsyncSession = Depends(get_tenant_db),
+):
+    if not token:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token parameter is required")
+
+    stmt = select(Invitation).where(Invitation.token == token)
+    res = await db.execute(stmt)
+    inv = res.scalar_one_or_none()
+    if not inv:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid invitation token")
+
+    if inv.status == "EXPIRED":
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Invitation link has expired")
+
+    # If first time opened, mark status as OPENED
+    if inv.status in ("PENDING", "SENT"):
+        inv.status = "OPENED"
+        await db.commit()
+        await db.refresh(inv)
+
+    cand_stmt = select(Candidate).where(Candidate.id == inv.candidate_id)
+    cand_res = await db.execute(cand_stmt)
+    candidate = cand_res.scalar_one_or_none()
+
+    drive_stmt = select(Drive).where(Drive.id == inv.drive_id)
+    drive_res = await db.execute(drive_stmt)
+    drive = drive_res.scalar_one_or_none()
+
+    from database.models import Job
+    job_title = "Engineering Candidate"
+    if drive and drive.job_id:
+        job_stmt = select(Job).where(Job.id == drive.job_id)
+        job_res = await db.execute(job_stmt)
+        job = job_res.scalar_one_or_none()
+        if job:
+            job_title = job.title
+
+    return TokenVerifyResponse(
+        valid=True,
+        invitation_id=inv.id,
+        candidate_id=inv.candidate_id,
+        candidate_name=candidate.name if candidate else "Candidate",
+        candidate_email=inv.email,
+        drive_id=inv.drive_id,
+        drive_name=drive.name if drive else "Hiring Drive",
+        job_title=job_title,
+        status=inv.status,
+        expires_at=inv.expires_at.isoformat() if inv.expires_at else None,
+    )
