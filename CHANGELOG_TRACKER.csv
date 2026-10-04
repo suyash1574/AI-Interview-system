@@ -18,3 +18,14 @@ Date,Version,Feature ID,Description,Files Affected,Status
 2026-10-03,2.1.0,TASK-VOX-001,Realtime LiveKit Voice Agent pipeline with Deepgram STT and Cartesia TTS,realtime/voice_agent.py;backend/providers/deepgram_adapter.py;backend/providers/cartesia_adapter.py;tests/unit/test_voice_agent.py,COMPLETED
 2026-10-03,2.1.0,TASK-EML-002,Resend API transactional email dispatcher for invitations and reports,backend/core/services/email.py;backend/api/v1/drives.py;tests/unit/test_email.py,COMPLETED
 2026-10-03,2.1.0,TASK-INT-002,Candidate integrity telemetry tracking and events endpoint,backend/api/v1/interviews.py;frontend/src/pages/VoiceInterviewShell.jsx;tests/unit/test_integrity.py,COMPLETED
+2026-10-04,2.2.0,TASK-MIG-001,Alembic migration 0002 for missing models and RLS policies,database/migrations/versions/0002_add_missing_models.py;tests/unit/test_migrations.py,COMPLETED
+2026-10-04,2.2.0,TASK-CORS-001,FastAPI CORSMiddleware integration for Vite frontend access,backend/main.py,COMPLETED
+2026-10-04,2.2.0,TASK-RATE-001,Sliding window RateLimitMiddleware with Prometheus metrics endpoint,backend/middleware/rate_limit.py;backend/main.py;tests/unit/test_reports.py,COMPLETED
+2026-10-04,2.2.0,TASK-COMP-001,Companies API router with tenant isolation and profile CRUD,backend/api/v1/companies.py;backend/api/v1/__init__.py;tests/unit/test_companies.py,COMPLETED
+2026-10-04,2.2.0,TASK-VOX-002,LiveKit Agent Worker process with streaming STT/TTS Silero VAD and Celery dispatch,realtime/agent_worker.py;realtime/__init__.py;tests/unit/test_agent_worker.py,COMPLETED
+2026-10-04,2.2.0,TASK-CTX-001,Dynamic candidate resume and job competency prompt injection,backend/api/v1/realtime.py;tests/unit/test_realtime.py,COMPLETED
+2026-10-04,2.2.0,TASK-EVAL-004,LLM structured multi-agent evaluators with Groq and PostgreSQL persistence,agents/technical.py;agents/behavioral.py;agents/communication.py;workers/tasks/evaluation.py,COMPLETED
+2026-10-04,2.2.0,TASK-PDF-001,ReportLab PDF generator and evaluation download endpoints,backend/core/services/pdf_generator.py;backend/api/v1/evaluations.py;tests/unit/test_reports.py,COMPLETED
+2026-10-04,2.2.0,TASK-DRV-002,Drive lifecycle status transitions and bulk CSV invitation upload,backend/api/v1/drives.py;backend/api/v1/invitations.py;tests/unit/test_drives.py,COMPLETED
+2026-10-04,2.2.0,TASK-TEL-001,Browser integrity telemetry listeners in VoiceInterviewShell,frontend/src/pages/VoiceInterviewShell.jsx;frontend/src/api/client.js,COMPLETED
+2026-10-04,2.2.0,TASK-CI-001,GitHub Actions CI workflow for pytest coverage and frontend build,.github/workflows/ci.yml,COMPLETED

@@ -33,6 +33,7 @@ export default function VoiceInterviewShell() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [manualInput, setManualInput] = useState('');
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [integrityNotice, setIntegrityNotice] = useState(null);
 
   const wsRef = useRef(null);
   const transcriptBottomRef = useRef(null);
@@ -127,16 +128,34 @@ export default function VoiceInterviewShell() {
       }
     };
 
-    const handleWindowBlur = () => {
-      reportTelemetry('WINDOW_BLUR', 'LOW', { reason: 'window_blur' });
+    const handlePaste = (e) => {
+      reportTelemetry('COPY_PASTE', 'MEDIUM', { action: 'paste', length: e.clipboardData?.getData('text')?.length || 0 });
+      setIntegrityNotice('Clipboard paste detected and logged for recruiter review.');
+      setTimeout(() => setIntegrityNotice(null), 4000);
+    };
+
+    const handleCopy = () => {
+      reportTelemetry('COPY_PASTE', 'LOW', { action: 'copy' });
+    };
+
+    const handleFullscreen = () => {
+      if (!document.fullscreenElement) {
+        reportTelemetry('FULLSCREEN_EXIT', 'MEDIUM', { reason: 'user_exit' });
+      }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('blur', handleWindowBlur);
+    window.addEventListener('paste', handlePaste);
+    window.addEventListener('copy', handleCopy);
+    document.addEventListener('fullscreenchange', handleFullscreen);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('blur', handleWindowBlur);
+      window.removeEventListener('paste', handlePaste);
+      window.removeEventListener('copy', handleCopy);
+      document.removeEventListener('fullscreenchange', handleFullscreen);
     };
   }, [interviewId, elapsedSeconds]);
 
@@ -203,6 +222,21 @@ export default function VoiceInterviewShell() {
           <span className="text-dark-muted text-xs font-mono pl-3">{formatTimer(elapsedSeconds)}</span>
         </div>
       </header>
+
+      {/* Integrity Notice Banner */}
+      <AnimatePresence>
+        {integrityNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="bg-amber-950/80 border-b border-amber-800/60 px-4 py-2 flex items-center justify-center space-x-2 text-xs text-amber-200 z-20"
+          >
+            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>{integrityNotice}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Center Area */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 max-w-3xl mx-auto w-full relative">

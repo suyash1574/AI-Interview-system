@@ -2,21 +2,27 @@ import json
 import logging
 from typing import Dict, List, Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from sqlalchemy import select
+
 from backend.core.engine.state_machine import InterviewStateMachine, InterviewState
 from backend.core.engine.security import LlamaGuardSecurity
 from backend.providers.groq_adapter import GroqProvider
+from database.session import AsyncSessionLocal
+from database.models import Interview, Job, Candidate, Resume
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-PROMPT_TEMPLATE = """You are Autergo, an expert technical interviewer.
-Context: Job: {job_title}. Competency: {competency}.
-Current State: {interview_state}.
-Candidate's last response: {candidate_response}
+PROMPT_TEMPLATE = """You are Autergo, an expert technical interviewer evaluating a candidate for the {job_title} role.
+Candidate Name: {candidate_name}
+Resume Skills: {resume_skills}
+Current Assessment Competency: {competency}
+Current Interview Stage: {interview_state}
+Candidate's Last Answer: {candidate_response}
 
 Instructions:
-1. Acknowledge the response naturally (max 1 sentence).
-2. If evidence is missing, ask a specific drill-down question.
+1. Briefly acknowledge their response in 1 natural sentence.
+2. Formulate a challenging, practical technical follow-up drill-down testing architecture, performance trade-offs, or system design.
 3. Keep your total response under 40 words.
 4. Do NOT say "As an AI".
 """
@@ -31,8 +37,10 @@ class RealtimeSessionContext:
         self.llm = GroqProvider()
         self.transcript: List[Dict[str, str]] = []
         self.is_interrupted = False
-        self.job_title = "Software Engineer"
+        self.candidate_name = "Candidate"
+        self.job_title = "Senior Software Engineer"
         self.competency = "System Design & Algorithms"
+        self.resume_skills = "Distributed Systems, Python, SQL"
 
 active_sessions: Dict[str, RealtimeSessionContext] = {}
 
@@ -49,8 +57,55 @@ async def realtime_interview_ws(
 
     logger.info(f"WebSocket client connected to interview session: {session_id}")
 
-    # Send initial greeting
-    welcome_text = "Hello! Welcome to your Autergo technical interview. When you are ready, please introduce yourself and your background."
+    # Inject real Candidate, Job & Resume Context from Database
+    if interview_id:
+        try:
+            async with AsyncSessionLocal() as db:
+                stmt = select(Interview).where(Interview.id == interview_id)
+                res = await db.execute(stmt)
+                interview = res.scalar_one_or_none()
+                if interview:
+                    # Fetch Job details
+                    job_stmt = select(Job).where(Job.id == interview.job_id)
+                    job_res = await db.execute(job_stmt)
+                    job = job_res.scalar_one_or_none()
+                    if job:
+                        ctx.job_title = job.title
+                        if job.competencies and len(job.competencies) > 0:
+                            comp_list = []
+                            for c in job.competencies:
+                                if isinstance(c, dict):
+                                    comp_list.append(c.get("name", ""))
+                                else:
+                                    comp_list.append(str(c))
+                            ctx.competency = ", ".join(filter(None, comp_list)) or ctx.competency
+
+                    # Fetch Candidate details
+                    cand_stmt = select(Candidate).where(Candidate.id == interview.candidate_id)
+                    cand_res = await db.execute(cand_stmt)
+                    candidate = cand_res.scalar_one_or_none()
+                    if candidate:
+                        ctx.candidate_name = candidate.name
+
+                    # Fetch Resume skills
+                    if interview.resume_id:
+                        res_stmt = select(Resume).where(Resume.id == interview.resume_id)
+                        res_res = await db.execute(res_stmt)
+                        resume = res_res.scalar_one_or_none()
+                        if resume and resume.extracted_skills:
+                            skills = [
+                                s.get("name", "") if isinstance(s, dict) else str(s)
+                                for s in resume.extracted_skills
+                            ]
+                            ctx.resume_skills = ", ".join(filter(None, skills)) or ctx.resume_skills
+        except Exception as e:
+            logger.warning(f"Could not load database context for interview {interview_id}: {e}")
+
+    # Send dynamic opening greeting
+    welcome_text = (
+        f"Hello {ctx.candidate_name}! Welcome to your Autergo technical interview for the {ctx.job_title} role. "
+        f"When you are ready, please give a brief overview of your background and experience."
+    )
     ctx.transcript.append({"speaker": "AI", "text": welcome_text})
     await websocket.send_json({
         "type": "ai_response",
@@ -63,8 +118,8 @@ async def realtime_interview_ws(
             raw_data = await websocket.receive_text()
             try:
                 message = json.loads(raw_data)
-            except Exception:
-                await websocket.send_json({"type": "error", "code": "INVALID_JSON", "message": "Payload must be JSON"})
+            except json.JSONDecodeError:
+                await websocket.send_json({"type": "error", "message": "Invalid JSON format"})
                 continue
 
             msg_type = message.get("type")
@@ -102,7 +157,6 @@ async def realtime_interview_ws(
                 })
 
                 # Deterministically step state machine if not complete
-                # Sequence: INIT -> DEVICE_CHECK -> CONSENT -> INTRODUCTION -> PROFILE -> CORE -> DEEP_DIVE -> VALIDATION -> CLOSING -> COMPLETE
                 current = ctx.state_machine.state
                 next_state_map = {
                     InterviewState.INIT: InterviewState.DEVICE_CHECK,
@@ -124,9 +178,11 @@ async def realtime_interview_ws(
                     )
                     await websocket.send_json(ctx.state_machine.build_state_change_event())
 
-                # Generate AI response using strategy prompt
+                # Generate AI response using dynamically injected strategy prompt
                 prompt = PROMPT_TEMPLATE.format(
                     job_title=ctx.job_title,
+                    candidate_name=ctx.candidate_name,
+                    resume_skills=ctx.resume_skills,
                     competency=ctx.competency,
                     interview_state=ctx.state_machine.state.value,
                     candidate_response=sec_check.sanitized_text,
@@ -148,6 +204,32 @@ async def realtime_interview_ws(
                     while ctx.state_machine.state != InterviewState.COMPLETE:
                         next_state = next_state_map.get(ctx.state_machine.state, InterviewState.COMPLETE)
                         ctx.state_machine.transition_to(next_state)
+
+                # Persist final transcript to DB & trigger evaluation
+                if ctx.interview_id:
+                    try:
+                        async with AsyncSessionLocal() as db:
+                            stmt = select(Interview).where(Interview.id == ctx.interview_id)
+                            res = await db.execute(stmt)
+                            interview_rec = res.scalar_one_or_none()
+                            if interview_rec:
+                                interview_rec.transcript = ctx.transcript
+                                interview_rec.status = "COMPLETED"
+                                await db.commit()
+                    except Exception as db_err:
+                        logger.warning(f"Could not persist interview {ctx.interview_id} transcript: {db_err}")
+
+                    # Trigger Celery / background evaluation
+                    try:
+                        from workers.tasks.evaluation import evaluate_interview_task
+                        evaluate_interview_task.delay(ctx.interview_id, json.dumps(ctx.transcript))
+                    except Exception as celery_err:
+                        logger.warning(f"Celery dispatch failed ({celery_err}), evaluating directly.")
+                        try:
+                            from workers.tasks.evaluation import evaluate_interview_task
+                            evaluate_interview_task(ctx.interview_id, json.dumps(ctx.transcript))
+                        except Exception as eval_err:
+                            logger.error(f"Fallback evaluation failed: {eval_err}")
 
                 await websocket.send_json({
                     "type": "complete",

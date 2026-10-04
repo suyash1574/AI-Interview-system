@@ -91,6 +91,40 @@ export const api = {
     return await res.json();
   },
 
+  async updateDriveStatus(driveId, status) {
+    const res = await fetch(`${BASE_URL}/drives/${driveId}/status`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  },
+
+  async uploadBulkCsv(driveId, file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = localStorage.getItem('autergo_token') || 'dev_mock_jwt_token';
+    const res = await fetch(`${BASE_URL}/drives/${driveId}/invitations/bulk-csv`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  },
+
+  async resendInvitation(invitationId) {
+    const res = await fetch(`${BASE_URL}/invitations/resend/${invitationId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  },
+
   // Resumes
   async uploadResume(candidateId, interviewId, file) {
     const formData = new FormData();

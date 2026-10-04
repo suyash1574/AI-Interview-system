@@ -66,7 +66,10 @@ def test_get_evaluation_detail_api(mock_recruiter, mock_db):
     mock_eval_res = MagicMock()
     mock_eval_res.scalar_one_or_none.return_value = fake_eval
 
-    mock_db.execute.side_effect = [mock_int_res, mock_eval_res]
+    mock_ar_res = MagicMock()
+    mock_ar_res.scalars.return_value.all.return_value = []
+
+    mock_db.execute.side_effect = [mock_int_res, mock_eval_res, mock_ar_res]
 
     client = TestClient(app)
     response = client.get("/api/v1/evaluations/int-1")
@@ -77,3 +80,51 @@ def test_get_evaluation_detail_api(mock_recruiter, mock_db):
     assert data["score_raw"] == 90
 
     app.dependency_overrides.clear()
+
+def test_download_evaluation_pdf_api(mock_recruiter, mock_db):
+    app.dependency_overrides[get_current_user] = lambda: mock_recruiter
+    app.dependency_overrides[get_tenant_db] = lambda: mock_db
+
+    fake_interview = Interview(id="int-1", tenant_id="tenant-1", candidate_id="cand-1", job_id="job-1")
+    fake_eval = Evaluation(
+        id="eval-1",
+        interview_id="int-1",
+        overall_score=88,
+        recommendation="PASS",
+        summary="Strong candidate",
+        score_raw=88,
+        evidence=[]
+    )
+
+    mock_int = MagicMock()
+    mock_int.scalar_one_or_none.return_value = fake_interview
+
+    mock_eval = MagicMock()
+    mock_eval.scalar_one_or_none.return_value = fake_eval
+
+    mock_cand = MagicMock()
+    mock_cand.scalar_one_or_none.return_value = None
+
+    mock_job = MagicMock()
+    mock_job.scalar_one_or_none.return_value = None
+
+    mock_ar = MagicMock()
+    mock_ar.scalars.return_value.all.return_value = []
+
+    mock_db.execute.side_effect = [mock_int, mock_eval, mock_cand, mock_job, mock_ar]
+
+    client = TestClient(app)
+    response = client.get("/api/v1/evaluations/int-1/pdf")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/pdf"
+    assert response.content.startswith(b"%PDF")
+
+    app.dependency_overrides.clear()
+
+def test_prometheus_metrics_endpoint():
+    client = TestClient(app)
+    response = client.get("/metrics")
+    assert response.status_code == 200
+    assert len(response.text) > 0
+
