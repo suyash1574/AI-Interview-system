@@ -51,4 +51,12 @@
 | 2026-10-04 | 2.5.0 | TASK-VOX-005 | Hugging Face zero-cost lightweight audio STT whisper-tiny and TTS providers | `backend/providers/hf_audio_adapter.py`, `backend/providers/huggingface.py`, `realtime/agent_worker.py`, `tests/unit/test_hf_audio_adapter.py` | COMPLETED |
 | 2026-10-04 | 2.5.0 | TASK-REP-002 | Dedicated candidate evaluation ReportDetailPage with integrity meter and PDF export | `frontend/src/pages/ReportDetailPage.jsx`, `frontend/src/App.jsx`, `frontend/src/pages/RecruiterDashboard.jsx`, `frontend/src/api/client.js` | COMPLETED |
 | 2026-10-04 | 2.5.0 | TASK-AUTH-003 | Clerk SignIn auth integration and demo login toggle | `frontend/src/pages/RecruiterLogin.jsx`, `backend/main.py` | COMPLETED |
+| 2026-10-05 | 2.6.0 | TASK-VOX-006 | Fixed next_state_map NameError in finish handler and added Redis session state backing | `backend/api/v1/realtime.py`, `tests/unit/test_realtime.py` | COMPLETED |
+| 2026-10-05 | 2.6.0 | TASK-REP-003 | Dedicated /reports API router with candidate guest token support and dual endpoint fallback | `backend/api/v1/reports.py`, `backend/api/v1/__init__.py`, `frontend/src/api/client.js`, `tests/unit/test_reports_api.py` | COMPLETED |
+| 2026-10-05 | 2.6.0 | TASK-REP-004 | Resolved dynamic candidate and job names in evaluation and report dispatch workers | `workers/tasks/reports.py`, `workers/tasks/evaluation.py` | COMPLETED |
+| 2026-10-05 | 2.6.0 | TASK-AUTH-004 | Clerk user and tenant auto-provisioning on authenticated login | `backend/dependencies/auth.py` | COMPLETED |
+| 2026-10-05 | 2.6.0 | TASK-DOCX-001 | Native DOCX resume parsing support via XML element extraction | `backend/core/services/resume_parser.py`, `tests/unit/test_resumes.py` | COMPLETED |
+| 2026-10-05 | 2.6.0 | TASK-DASH-003 | Live calculated KPI cards across all drives and candidates | `frontend/src/pages/RecruiterDashboard.jsx` | COMPLETED |
+| 2026-10-05 | 2.6.0 | TASK-VOX-007 | LiveKit React SDK integration with LiveKitRoom and RoomAudioRenderer | `frontend/src/pages/VoiceInterviewShell.jsx`, `frontend/package.json` | COMPLETED |
+
 

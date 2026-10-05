@@ -55,3 +55,18 @@ def test_realtime_websocket_flow():
         websocket.send_json({"type": "finish"})
         done = websocket.receive_json()
         assert done["type"] == "complete"
+
+def test_realtime_finish_immediate():
+    """Verify that finish arriving before candidate_answer never raises NameError."""
+    client = TestClient(app)
+    session_id = "test-session-immediate-finish"
+
+    with client.websocket_connect(f"/api/v1/realtime/interview/{session_id}") as websocket:
+        welcome = websocket.receive_json()
+        assert welcome["type"] == "ai_response"
+        # Immediate finish without candidate_answer
+        websocket.send_json({"type": "finish"})
+        done = websocket.receive_json()
+        assert done["type"] == "complete"
+        assert "Interview finished successfully" in done["message"]
+

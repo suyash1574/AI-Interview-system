@@ -19,6 +19,8 @@ def generate_and_dispatch_report_task(interview_id: str, evaluation_data: Dict[s
     strengths = evaluation_data.get("strength", "Demonstrated core technical competencies")
     recommendation = evaluation_data.get("recommendation", "PASS" if score >= 70 else "REJECT")
     summary = evaluation_data.get("summary", f"Evaluation completed with overall score of {score}/100.")
+    candidate_name = evaluation_data.get("candidate_name") or "Candidate"
+    job_title = evaluation_data.get("job_title") or "Software Engineering Candidate"
 
     report_id = str(uuid.uuid4())
     key = f"reports/{interview_id}/{report_id}.pdf"
@@ -27,8 +29,8 @@ def generate_and_dispatch_report_task(interview_id: str, evaluation_data: Dict[s
     try:
         generator = ReportPDFGenerator(
             interview_id=interview_id,
-            candidate_name="Candidate",
-            job_title="Software Engineering Candidate",
+            candidate_name=candidate_name,
+            job_title=job_title,
             overall_score=score,
             recommendation=recommendation,
             summary=summary,
@@ -44,6 +46,8 @@ def generate_and_dispatch_report_task(interview_id: str, evaluation_data: Dict[s
     report_payload = {
         "report_id": report_id,
         "interview_id": interview_id,
+        "candidate_name": candidate_name,
+        "job_title": job_title,
         "overall_score": score,
         "confidence_score": confidence,
         "evidence_count": len(evidence),
@@ -56,7 +60,7 @@ def generate_and_dispatch_report_task(interview_id: str, evaluation_data: Dict[s
     dispatcher = EmailDispatcher()
     dispatcher.send_report_notification(
         recipient_email=recruiter_email,
-        candidate_name="Candidate",
+        candidate_name=candidate_name,
         score=score,
         report_url=pdf_url
     )

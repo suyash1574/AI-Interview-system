@@ -17,6 +17,28 @@ def test_resume_parser_service_text():
     assert len(result.skills) > 0
     assert "Skills:" in result.summary
 
+def test_resume_parser_service_docx():
+    import zipfile
+    parser = ResumeParserService()
+    
+    # Construct in-memory DOCX zip
+    docx_buf = io.BytesIO()
+    with zipfile.ZipFile(docx_buf, "w") as docx_zip:
+        xml_content = (
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            '<w:body><w:p><w:r><w:t>Jane Doe Senior Backend Engineer with Python, FastAPI, and PostgreSQL.</w:t></w:r></w:p></w:body>'
+            '</w:document>'
+        )
+        docx_zip.writestr("word/document.xml", xml_content)
+    
+    result = parser.parse("jane_resume.docx", docx_buf.getvalue())
+    assert result.filename == "jane_resume.docx"
+    assert "Jane Doe" in result.raw_text
+    assert "Python" in result.raw_text
+    assert len(result.skills) > 0
+
+
 def test_resume_upload_endpoint():
     mock_actor = AuthActor(id="cand-1", role="CANDIDATE", is_candidate=True)
     mock_db = AsyncMock()

@@ -75,6 +75,48 @@ def verify_token(token: str, jwks: dict) -> dict:
         raise AuthorizationError(f"Token validation failed: {str(e)}")
     raise AuthorizationError("Unable to find appropriate key")
 
+import logging
+from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
+
+async def ensure_clerk_provisioning(user_id: str, tenant_id: str, email: str, name: str, role: str):
+    """Automatically provisions or updates Tenant and User records for authenticated Clerk users."""
+    try:
+        from database.session import AsyncSessionLocal
+        from database.models import Tenant, User
+        from sqlalchemy import select
+        
+        async with AsyncSessionLocal() as db:
+            # 1. Ensure Tenant exists
+            t_stmt = select(Tenant).where(Tenant.id == tenant_id)
+            t_res = await db.execute(t_stmt)
+            tenant = t_res.scalar_one_or_none()
+            if not tenant:
+                tenant = Tenant(id=tenant_id, name="Default Organization")
+                db.add(tenant)
+                await db.flush()
+
+            # 2. Ensure User exists
+            u_stmt = select(User).where(User.clerk_id == user_id)
+            u_res = await db.execute(u_stmt)
+            user = u_res.scalar_one_or_none()
+            if not user:
+                user = User(
+                    tenant_id=tenant_id,
+                    clerk_id=user_id,
+                    email=email,
+                    name=name,
+                    role=role or "RECRUITER",
+                    email_verified=True,
+                )
+                db.add(user)
+            else:
+                user.last_login_at = datetime.now(timezone.utc)
+            await db.commit()
+    except Exception as e:
+        logger.debug(f"User provisioning auto-sync deferred ({e})")
+
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> CurrentUser:
     token = credentials.credentials
     try:
@@ -83,8 +125,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         
         user_id = payload.get("sub")
         metadata = payload.get("org_metadata", {})
-        tenant_id = payload.get("org_id")
-        role = metadata.get("role")
+        tenant_id = payload.get("org_id") or f"org_{user_id}"
+        role = metadata.get("role") or "RECRUITER"
+        email = payload.get("email") or f"{user_id}@autergo.com"
+        name = payload.get("name") or "Recruiter"
+
+        # Auto-provision tenant & user asynchronously
+        import asyncio
+        asyncio.create_task(ensure_clerk_provisioning(user_id, tenant_id, email, name, role))
         
         return CurrentUser(user_id=user_id, tenant_id=tenant_id, role=role)
     except AuthorizationError as e:

@@ -153,9 +153,14 @@ export const api = {
   // Reports
   async getReport(interviewId) {
     try {
-      const res = await fetch(`${BASE_URL}/reports/${interviewId}`, {
+      let res = await fetch(`${BASE_URL}/reports/${interviewId}`, {
         headers: getAuthHeaders()
       });
+      if (!res.ok) {
+        res = await fetch(`${BASE_URL}/evaluations/${interviewId}/report`, {
+          headers: getAuthHeaders()
+        });
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (e) {

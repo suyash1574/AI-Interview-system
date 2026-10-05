@@ -27,7 +27,19 @@ Instructions:
 4. Do NOT say "As an AI".
 """
 
-# Active session registries in-memory
+NEXT_STATE_MAP = {
+    InterviewState.INIT: InterviewState.DEVICE_CHECK,
+    InterviewState.DEVICE_CHECK: InterviewState.CONSENT,
+    InterviewState.CONSENT: InterviewState.INTRODUCTION,
+    InterviewState.INTRODUCTION: InterviewState.PROFILE,
+    InterviewState.PROFILE: InterviewState.CORE,
+    InterviewState.CORE: InterviewState.DEEP_DIVE,
+    InterviewState.DEEP_DIVE: InterviewState.VALIDATION,
+    InterviewState.VALIDATION: InterviewState.CLOSING,
+    InterviewState.CLOSING: InterviewState.COMPLETE,
+}
+
+# Active session registries in-memory + Redis backing
 class RealtimeSessionContext:
     def __init__(self, session_id: str, interview_id: Optional[str] = None):
         self.session_id = session_id
@@ -44,6 +56,47 @@ class RealtimeSessionContext:
 
 active_sessions: Dict[str, RealtimeSessionContext] = {}
 
+async def save_session_to_redis(session_id: str, ctx: RealtimeSessionContext):
+    """Persists session state into Redis hash for horizontal scaling across API pods."""
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+        payload = {
+            "session_id": session_id,
+            "interview_id": ctx.interview_id or "",
+            "state": ctx.state_machine.state.value,
+            "candidate_name": ctx.candidate_name,
+            "job_title": ctx.job_title,
+            "transcript": json.dumps(ctx.transcript),
+        }
+        await client.hset(f"autergo:session:{session_id}", mapping=payload)
+        await client.expire(f"autergo:session:{session_id}", 86400)
+        await client.aclose()
+    except Exception as e:
+        logger.debug(f"Redis session sync fallback (in-memory used): {e}")
+
+async def load_session_from_redis(session_id: str, ctx: RealtimeSessionContext):
+    """Restores session state from Redis if reconnecting or transferred between workers."""
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+        data = await client.hgetall(f"autergo:session:{session_id}")
+        await client.aclose()
+        if data:
+            if "transcript" in data:
+                ctx.transcript = json.loads(data["transcript"])
+            if "candidate_name" in data:
+                ctx.candidate_name = data["candidate_name"]
+            if "job_title" in data:
+                ctx.job_title = data["job_title"]
+            if "state" in data:
+                for s in InterviewState:
+                    if s.value == data["state"]:
+                        ctx.state_machine.state = s
+                        break
+    except Exception as e:
+        logger.debug(f"Redis session restore fallback: {e}")
+
 @router.websocket("/interview/{session_id}")
 async def realtime_interview_ws(
     websocket: WebSocket,
@@ -54,6 +107,7 @@ async def realtime_interview_ws(
 
     ctx = RealtimeSessionContext(session_id=session_id, interview_id=interview_id)
     active_sessions[session_id] = ctx
+    await load_session_from_redis(session_id, ctx)
 
     logger.info(f"WebSocket client connected to interview session: {session_id}")
 
@@ -158,20 +212,8 @@ async def realtime_interview_ws(
 
                 # Deterministically step state machine if not complete
                 current = ctx.state_machine.state
-                next_state_map = {
-                    InterviewState.INIT: InterviewState.DEVICE_CHECK,
-                    InterviewState.DEVICE_CHECK: InterviewState.CONSENT,
-                    InterviewState.CONSENT: InterviewState.INTRODUCTION,
-                    InterviewState.INTRODUCTION: InterviewState.PROFILE,
-                    InterviewState.PROFILE: InterviewState.CORE,
-                    InterviewState.CORE: InterviewState.DEEP_DIVE,
-                    InterviewState.DEEP_DIVE: InterviewState.VALIDATION,
-                    InterviewState.VALIDATION: InterviewState.CLOSING,
-                    InterviewState.CLOSING: InterviewState.COMPLETE,
-                }
-
-                if current in next_state_map:
-                    target_state = next_state_map[current]
+                if current in NEXT_STATE_MAP:
+                    target_state = NEXT_STATE_MAP[current]
                     ctx.state_machine.transition_to(
                         target_state,
                         competency=ctx.competency if target_state == InterviewState.DEEP_DIVE else None
@@ -197,13 +239,18 @@ async def realtime_interview_ws(
                         "text": ai_reply,
                         "state": ctx.state_machine.state.value,
                     })
+                
+                # Persist turn to Redis
+                await save_session_to_redis(session_id, ctx)
 
             # 3. Handle Complete / Finish
             elif msg_type == "finish":
                 if not ctx.state_machine.is_terminal():
                     while ctx.state_machine.state != InterviewState.COMPLETE:
-                        next_state = next_state_map.get(ctx.state_machine.state, InterviewState.COMPLETE)
+                        next_state = NEXT_STATE_MAP.get(ctx.state_machine.state, InterviewState.COMPLETE)
                         ctx.state_machine.transition_to(next_state)
+
+                await save_session_to_redis(session_id, ctx)
 
                 # Persist final transcript to DB & trigger evaluation
                 if ctx.interview_id:

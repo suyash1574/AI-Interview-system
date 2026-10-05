@@ -31,9 +31,24 @@ class ResumeParserService:
             logger.warning(f"pypdf extraction failed ({e}), attempting fallback text decode")
             return file_bytes.decode("utf-8", errors="ignore")
 
+    def extract_text_from_docx(self, file_bytes: bytes) -> str:
+        try:
+            import zipfile
+            import xml.etree.ElementTree as ET
+            with zipfile.ZipFile(io.BytesIO(file_bytes)) as docx:
+                xml_content = docx.read("word/document.xml")
+                tree = ET.fromstring(xml_content)
+                texts = [node.text for node in tree.iter() if node.tag.endswith("t") and node.text]
+                return " ".join(texts)
+        except Exception as e:
+            logger.warning(f"DOCX extraction fallback ({e}): returning plain text decode")
+            return file_bytes.decode("utf-8", errors="ignore")
+
     def parse(self, filename: str, file_bytes: bytes) -> ParsedResume:
         if filename.lower().endswith(".pdf"):
             raw_text = self.extract_text_from_pdf(file_bytes)
+        elif filename.lower().endswith(".docx"):
+            raw_text = self.extract_text_from_docx(file_bytes)
         else:
             raw_text = file_bytes.decode("utf-8", errors="ignore")
 

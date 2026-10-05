@@ -100,6 +100,21 @@ async def persist_evaluation_to_db(interview_id: str, result_dict: Dict[str, Any
             if recruiter_user and recruiter_user.email:
                 recruiter_email = recruiter_user.email
 
+            # Query real Candidate and Job names
+            candidate_name = "Candidate"
+            if interview.candidate_id:
+                cand_res = await db.execute(select(Candidate).where(Candidate.id == interview.candidate_id))
+                cand_obj = cand_res.scalar_one_or_none()
+                if cand_obj and cand_obj.name:
+                    candidate_name = cand_obj.name
+
+            job_title = "Software Engineer"
+            if interview.job_id:
+                job_res = await db.execute(select(Job).where(Job.id == interview.job_id))
+                job_obj = job_res.scalar_one_or_none()
+                if job_obj and job_obj.title:
+                    job_title = job_obj.title
+
             # Update interview status
             interview.status = "COMPLETED"
             await db.commit()
@@ -111,6 +126,8 @@ async def persist_evaluation_to_db(interview_id: str, result_dict: Dict[str, Any
                 generate_and_dispatch_report_task.delay(
                     interview_id=interview_id,
                     evaluation_data={
+                        "candidate_name": candidate_name,
+                        "job_title": job_title,
                         "score": result_dict["overall_score"],
                         "confidence_score": 0.92,
                         "evidence": result_dict["aggregated_evidence"],

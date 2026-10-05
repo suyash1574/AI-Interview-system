@@ -10,8 +10,10 @@ import {
   CheckCircle2, 
   Lock, 
   AlertCircle,
-  Radio
+  Radio,
+  Volume2
 } from 'lucide-react';
+import { LiveKitRoom, RoomAudioRenderer } from '@livekit/components-react';
 
 export default function VoiceInterviewShell() {
   const { sessionId: paramSessionId } = useParams();
@@ -34,9 +36,37 @@ export default function VoiceInterviewShell() {
   const [manualInput, setManualInput] = useState('');
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [integrityNotice, setIntegrityNotice] = useState(null);
+  const [livekitToken, setLivekitToken] = useState(searchParams.get('livekit_token') || '');
+  const livekitUrl = import.meta.env?.VITE_LIVEKIT_URL || 'wss://livekit.autergo.com';
 
   const wsRef = useRef(null);
   const transcriptBottomRef = useRef(null);
+
+  // Auto-fetch LiveKit token if room is configured
+  useEffect(() => {
+    async function fetchLiveKitToken() {
+      if (!livekitToken) {
+        try {
+          const res = await fetch('/api/v1/sessions/livekit-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              room_name: `interview-${interviewId}`,
+              participant_name: 'Candidate',
+              participant_identity: `cand-${sessionId}`
+            })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.token) setLivekitToken(data.token);
+          }
+        } catch (e) {
+          console.debug('LiveKit token auto-fetch fallback:', e);
+        }
+      }
+    }
+    fetchLiveKitToken();
+  }, [interviewId, sessionId, livekitToken]);
 
   // Timer
   useEffect(() => {
@@ -197,7 +227,7 @@ export default function VoiceInterviewShell() {
     return `${m}:${s}`;
   };
 
-  return (
+  const shellContent = (
     <div className="h-screen w-screen bg-dark-base text-dark-ink flex flex-col justify-between overflow-hidden select-none font-sans">
       {/* Top Bar */}
       <header className="h-14 border-b border-dark-border px-6 flex items-center justify-between bg-dark-surface/50 backdrop-blur-md">
@@ -220,8 +250,17 @@ export default function VoiceInterviewShell() {
         {/* Status indicator */}
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1.5 text-xs text-emerald-400 font-mono">
-            <Radio className="w-3.5 h-3.5 animate-pulse" />
-            <span>{connected ? 'LIVE STREAM' : 'OFFLINE SIM'}</span>
+            {livekitToken ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                <span>LIVEKIT WEBRTC</span>
+              </>
+            ) : (
+              <>
+                <Radio className="w-3.5 h-3.5 animate-pulse" />
+                <span>{connected ? 'AUDIO WS STREAM' : 'LOCAL SIM'}</span>
+              </>
+            )}
           </div>
           <span className="text-dark-muted text-xs font-mono pl-3">{formatTimer(elapsedSeconds)}</span>
         </div>
@@ -389,4 +428,21 @@ export default function VoiceInterviewShell() {
       </AnimatePresence>
     </div>
   );
+
+  if (livekitToken && livekitUrl && !livekitToken.includes('placeholder')) {
+    return (
+      <LiveKitRoom
+        serverUrl={livekitUrl}
+        token={livekitToken}
+        connect={true}
+        audio={!isMuted}
+        video={false}
+      >
+        <RoomAudioRenderer />
+        {shellContent}
+      </LiveKitRoom>
+    );
+  }
+
+  return shellContent;
 }
