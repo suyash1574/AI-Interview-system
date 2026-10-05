@@ -63,6 +63,22 @@ class Settings(BaseSettings):
     INTEGRITY_HIGH_PENALTY: float = 0.15
     INTEGRITY_MED_PENALTY: float = 0.05
 
+    # Local LLM Configuration (GGUF via llama-cpp-python)
+    LOCAL_MODEL_PATH: str = "D:/Projects/Large Language Models/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf"
+    LOCAL_MODEL_N_GPU_LAYERS: int = 0
+    LOCAL_MODEL_CTX_SIZE: int = 4096
+    LOCAL_MODEL_N_THREADS: int = 8
+    LOCAL_MODEL_N_BATCH: int = 512
+    LOCAL_MODEL_USE_MLOCK: bool = False
+    LOCAL_MODEL_USE_MMAP: bool = True
+
+    # Classification & Security Model Configuration
+    CLASSIFICATION_DEVICE: str = "cpu"
+    PROMPT_INJECTION_MODEL: str = "microsoft/deberta-v3-base-prompt-injection"
+    PII_DETECTION_MODEL: str = "obi/deid_roberta_i2b2"
+    TOPIC_CLASSIFICATION_MODEL: str = "facebook/bart-large-mnli"
+
+
     class Config:
         env_file = ".env"
         extra = "ignore"

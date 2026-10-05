@@ -42,14 +42,13 @@ class LiveKitAgentWorker:
         self.state_machine = InterviewStateMachine(interview_id=self.interview_id)
         self.security = LlamaGuardSecurity()
         
-        # Select LLM Provider: NVIDIA NIM, Groq, or explicit injection
+        # Select LLM Provider: Local GGUF, NVIDIA NIM, Groq, or explicit injection
         if llm_provider is not None:
             self.llm = llm_provider
-        elif getattr(settings, "LLM_PROVIDER", "auto") == "nvidia" or (settings.NVIDIA_API_KEY and not settings.GROQ_API_KEY):
-            from backend.providers.nvidia_adapter import NVIDIAProvider
-            self.llm = NVIDIAProvider()
         else:
-            self.llm = GroqProvider()
+            from backend.providers import get_llm_provider
+            self.llm = get_llm_provider()
+
 
         # Select STT & TTS Providers (Deepgram/Cartesia or Free Hugging Face Voice)
         from backend.providers.hf_audio_adapter import get_stt_provider, get_tts_provider

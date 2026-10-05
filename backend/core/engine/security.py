@@ -54,21 +54,30 @@ class LlamaGuardSecurity:
             return None
 
         try:
-            import httpx
-            async with httpx.AsyncClient(timeout=1.5) as client:
-                res = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {settings.GROQ_API_KEY}"},
-                    json={
-                        "model": "llama-guard-3-8b",
-                        "messages": [{"role": "user", "content": text}],
-                        "temperature": 0.0,
-                    }
-                )
-                if res.status_code == 200:
-                    content = res.json()["choices"][0]["message"]["content"].strip()
-                    if content.lower().startswith("unsafe"):
-                        return f"Llama Guard 3 semantic violation: {content}"
+            # 1. Hugging Face DeBERTa prompt injection classifier
+            from backend.providers.classification_adapter import ClassificationProvider
+            clf = ClassificationProvider()
+            hf_res = await clf.check_prompt_injection(text)
+            if hf_res.get("is_injection") and hf_res.get("score", 0.0) >= 0.70:
+                return f"Hugging Face Classifier prompt injection detected (score={hf_res.get('score', 0.0):.2f})"
+
+            # 2. Cloud Groq Llama-Guard-3 if configured
+            if getattr(settings, "GROQ_API_KEY", ""):
+                import httpx
+                async with httpx.AsyncClient(timeout=1.5) as client:
+                    res = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={"Authorization": f"Bearer {settings.GROQ_API_KEY}"},
+                        json={
+                            "model": "llama-guard-3-8b",
+                            "messages": [{"role": "user", "content": text}],
+                            "temperature": 0.0,
+                        }
+                    )
+                    if res.status_code == 200:
+                        content = res.json()["choices"][0]["message"]["content"].strip()
+                        if content.lower().startswith("unsafe"):
+                            return f"Llama Guard 3 semantic violation: {content}"
         except Exception as e:
             logger.debug(f"Semantic guardrail evaluation skipped/failed: {e}")
         return None
@@ -109,12 +118,18 @@ class LlamaGuardSecurity:
                     sanitized_text="[FILTERED_SEMANTIC_VIOLATION]"
                 )
 
-        # 4. Basic sanitization of null bytes and control chars
-        sanitized = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", trimmed)
+        # 4. PII detection and masking
+        from backend.providers.classification_adapter import ClassificationProvider
+        clf = ClassificationProvider()
+        sanitized = clf.mask_pii(trimmed)
+
+        # 5. Basic sanitization of null bytes and control chars
+        sanitized = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", "", sanitized)
 
         return SecurityCheckResult(
             is_safe=True,
             violation=None,
             sanitized_text=sanitized
         )
+
 

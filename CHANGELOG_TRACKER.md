@@ -64,6 +64,10 @@
 | 2026-10-05 | 2.7.0 | TASK-ARCH-004 | Database async engine connection pool tuning and unified RLS tenant context | `database/session.py`, `backend/dependencies/db.py`, `backend/config.py`, `tests/unit/test_rls_dependency.py` | COMPLETED |
 | 2026-10-05 | 2.7.0 | TASK-ARCH-005 | Configurable integrity penalty scoring parameters and Celery task DLQ reliability | `backend/config.py`, `workers/tasks/evaluation.py`, `workers/celery_app.py` | COMPLETED |
 | 2026-10-05 | 2.7.0 | TASK-ARCH-006 | Custom Prometheus latency histograms and fail-fast startup configuration validation | `backend/main.py` | COMPLETED |
+| 2026-10-05 | 2.8.0 | TASK-LOCAL-001 | Local LLM GGUF provider using llama-cpp-python for Qwen 2.5 Coder 1.5B | `backend/providers/local_llm_adapter.py`, `backend/providers/__init__.py`, `backend/config.py`, `requirements.txt`, `tests/unit/test_local_llm.py` | COMPLETED |
+| 2026-10-05 | 2.8.0 | TASK-LOCAL-002 | Offline ClassificationProvider for PII masking and zero-shot competency routing | `backend/providers/classification_adapter.py`, `backend/core/engine/security.py`, `tests/unit/test_classification.py` | COMPLETED |
+| 2026-10-05 | 2.8.0 | TASK-LOCAL-003 | Unified get_llm_provider factory with auto local GGUF discovery and hybrid failover | `backend/providers/__init__.py`, `realtime/agent_worker.py`, `realtime/voice_agent.py` | COMPLETED |
+
 
 
 

@@ -33,8 +33,10 @@ class LiveKitVoiceAgent:
         self.state_machine = InterviewStateMachine(interview_id=interview_id)
         self.security = LlamaGuardSecurity()
         self.stt = DeepgramSTTProvider()
-        self.llm = GroqProvider()
+        from backend.providers import get_llm_provider
+        self.llm = get_llm_provider()
         self.tts = CartesiaTTSProvider()
+
 
         self.transcript: List[Dict[str, Any]] = []
         self.is_interrupted = False
