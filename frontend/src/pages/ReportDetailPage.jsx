@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldCheck, 
   ArrowLeft, 
@@ -16,7 +16,11 @@ import {
   Eye, 
   ExternalLink,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Bot,
+  User,
+  Activity,
+  Award
 } from 'lucide-react';
 import { api } from '../api/client.js';
 
@@ -116,22 +120,22 @@ export default function ReportDetailPage() {
   const downloadPdfUrl = api.getReportPdfUrl(currentReport.interview_id);
 
   return (
-    <div className="min-h-screen bg-canvas text-ink flex flex-col">
+    <div className="min-h-screen bg-[#07090e] text-[#f8fafc] flex flex-col font-sans relative mesh-bg">
       {/* Top Navbar */}
-      <header className="h-14 border-b border-border bg-white px-6 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      <header className="h-16 border-b border-white/10 glass-panel px-6 flex items-center justify-between sticky top-0 z-30 shadow-xl">
         <div className="flex items-center space-x-4">
           <button 
             onClick={() => navigate('/dashboard')}
-            className="flex items-center text-xs text-ink-muted hover:text-ink transition-colors font-medium space-x-1"
+            className="flex items-center text-xs text-slate-400 hover:text-white transition-colors font-medium space-x-1.5 cursor-pointer glass-card px-3 py-1.5 rounded-xl"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Dashboard</span>
           </button>
-          <span className="text-border">/</span>
-          <div className="flex items-center space-x-2 text-xs font-mono text-ink-muted">
-            <span>Interviews</span>
-            <ChevronRight className="w-3 h-3 text-border" />
-            <span className="text-ink font-semibold">{currentReport.candidate_name}</span>
+          <span className="text-white/20">/</span>
+          <div className="flex items-center space-x-2 text-xs font-mono text-slate-400">
+            <span>Evaluation Dossier</span>
+            <ChevronRight className="w-3 h-3 text-slate-600" />
+            <span className="text-white font-semibold">{currentReport.candidate_name}</span>
           </div>
         </div>
 
@@ -140,14 +144,14 @@ export default function ReportDetailPage() {
             href={downloadPdfUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center space-x-1.5 border border-border hover:bg-canvas-subtle px-3 py-1.5 rounded-lg text-xs font-semibold text-ink transition-colors shadow-2xs"
+            className="inline-flex items-center space-x-2 glass-card hover:border-slate-500 px-4 py-2 rounded-xl text-xs font-medium text-white transition-colors"
           >
-            <Download className="w-3.5 h-3.5 text-primary" />
-            <span>Download PDF</span>
+            <Download className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Download Certified PDF</span>
           </a>
           <button 
             onClick={() => navigate('/dashboard')}
-            className="bg-primary hover:bg-primary-hover text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-xs"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition-all shadow-glow-primary cursor-pointer"
           >
             Back to Roster
           </button>
@@ -155,22 +159,27 @@ export default function ReportDetailPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-8 space-y-6">
+      <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-8 space-y-6 z-10">
         {/* Candidate Profile & Recommendation Banner */}
         <motion.div 
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-border rounded-xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6"
+          className="glass-panel border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden"
         >
+          {/* Top highlight bar */}
+          <div className={`absolute top-0 inset-x-0 h-1 ${
+            isPass ? 'bg-gradient-to-r from-emerald-500 to-teal-400' : isHold ? 'bg-gradient-to-r from-amber-500 to-orange-400' : 'bg-gradient-to-r from-rose-500 to-red-400'
+          }`} />
+
           <div>
-            <div className="flex items-center space-x-3">
-              <h1 className="text-2xl font-bold tracking-tight text-ink">{currentReport.candidate_name}</h1>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold uppercase tracking-wider flex items-center gap-1 ${
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">{currentReport.candidate_name}</h1>
+              <span className={`px-3 py-1 rounded-full text-xs font-mono font-semibold uppercase tracking-wider flex items-center gap-1.5 border ${
                 isPass 
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]' 
                   : isHold 
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200' 
-                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                  : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
               }`}>
                 {isPass && <CheckCircle2 className="w-3.5 h-3.5" />}
                 {isHold && <AlertTriangle className="w-3.5 h-3.5" />}
@@ -178,80 +187,86 @@ export default function ReportDetailPage() {
                 <span>{currentReport.recommendation} RECOMMENDATION</span>
               </span>
             </div>
-            <p className="text-xs text-ink-muted font-mono mt-1">
-              Target Role: <strong className="text-ink">{currentReport.job_title}</strong> &bull; Concluded {currentReport.evaluated_at}
+            <p className="text-xs text-slate-400 font-mono mt-1.5 flex items-center gap-2">
+              <span>Target Role: <strong className="text-white">{currentReport.job_title}</strong></span>
+              <span>&bull;</span>
+              <span>Concluded {currentReport.evaluated_at}</span>
             </p>
           </div>
 
-          <div className="flex items-center space-x-6 border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
+          <div className="flex items-center space-x-6 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-8">
             <div className="text-center md:text-right">
-              <div className="text-[11px] text-ink-muted uppercase font-mono tracking-wider font-semibold">Composite Score</div>
-              <div className={`text-3xl font-extrabold font-mono mt-0.5 ${
-                currentReport.composite_score >= 80 ? 'text-emerald-600' : currentReport.composite_score >= 60 ? 'text-amber-600' : 'text-rose-600'
+              <div className="text-[11px] text-slate-400 uppercase font-mono tracking-wider font-semibold">Composite Score</div>
+              <div className={`text-4xl font-extrabold font-mono mt-0.5 ${
+                currentReport.composite_score >= 80 ? 'text-emerald-400' : currentReport.composite_score >= 60 ? 'text-amber-400' : 'text-rose-400'
               }`}>
                 {currentReport.composite_score}
-                <span className="text-sm font-normal text-ink-muted font-sans">/100</span>
+                <span className="text-sm font-normal text-slate-500 font-sans">/100</span>
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* 3 Metric Cards: Composite, Integrity Telemetry, Compliance */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* 3 Metric Cards: Composite, Integrity Telemetry, Proctoring */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Card 1: Score Gauge */}
-          <div className="bg-white border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="glass-panel border border-white/10 rounded-2xl p-6 shadow-xl space-y-3 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-ink-muted uppercase font-mono">Weighted Performance</span>
-              <Brain className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold text-slate-400 uppercase font-mono">Weighted Performance</span>
+              <Brain className="w-4 h-4 text-indigo-400" />
             </div>
-            <div className="text-2xl font-bold font-mono text-ink">
+            <div className="text-3xl font-bold font-mono text-white">
               {currentReport.composite_score}%
             </div>
-            <div className="w-full bg-canvas-muted h-2 rounded-full overflow-hidden">
-              <div 
-                className="bg-primary h-full transition-all duration-700" 
-                style={{ width: `${currentReport.composite_score}%` }}
+            <div className="w-full bg-black/40 h-2 rounded-full overflow-hidden border border-white/5">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${currentReport.composite_score}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+                className="bg-gradient-to-r from-indigo-500 to-cyan-400 h-full rounded-full" 
               />
             </div>
-            <p className="text-[11px] text-ink-muted">
+            <p className="text-[11px] text-slate-400 font-mono">
               50% Technical + 25% Behavioral + 25% Communication
             </p>
           </div>
 
           {/* Card 2: Integrity Telemetry */}
-          <div className="bg-white border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="glass-panel border border-white/10 rounded-2xl p-6 shadow-xl space-y-3 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-ink-muted uppercase font-mono">Session Integrity Meter</span>
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span className="text-xs font-semibold text-slate-400 uppercase font-mono">Session Integrity Meter</span>
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
             </div>
             <div className="flex items-baseline space-x-2">
-              <div className="text-2xl font-bold font-mono text-emerald-600">
+              <div className="text-3xl font-bold font-mono text-emerald-400">
                 {Math.round((currentReport.integrity_score || 1.0) * 100)}%
               </div>
-              <span className="text-xs text-ink-muted font-mono">High Trust</span>
+              <span className="text-xs text-emerald-400/80 font-mono">High Trust Verified</span>
             </div>
-            <div className="w-full bg-canvas-muted h-2 rounded-full overflow-hidden">
-              <div 
-                className="bg-emerald-600 h-full transition-all duration-700" 
-                style={{ width: `${Math.round((currentReport.integrity_score || 1.0) * 100)}%` }}
+            <div className="w-full bg-black/40 h-2 rounded-full overflow-hidden border border-white/5">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.round((currentReport.integrity_score || 1.0) * 100)}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
+                className="bg-emerald-400 h-full rounded-full" 
               />
             </div>
-            <p className="text-[11px] text-ink-muted font-mono">
-              Integrity Telemetry: {currentReport.integrity_events_count || 0} Flagged Malpractice Events
+            <p className="text-[11px] text-slate-400 font-mono">
+              {currentReport.integrity_events_count || 0} Flagged Malpractice Events
             </p>
           </div>
 
           {/* Card 3: Proctoring Status */}
-          <div className="bg-white border border-border rounded-xl p-5 shadow-xs space-y-3">
+          <div className="glass-panel border border-white/10 rounded-2xl p-6 shadow-xl space-y-3 relative overflow-hidden">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-ink-muted uppercase font-mono">Proctoring Telemetry</span>
-              <Eye className="w-4 h-4 text-primary" />
+              <span className="text-xs font-semibold text-slate-400 uppercase font-mono">Proctoring Telemetry</span>
+              <Eye className="w-4 h-4 text-cyan-400" />
             </div>
-            <div className="text-sm font-semibold text-ink flex items-center space-x-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Full Browser Lock Honored</span>
+            <div className="text-sm font-semibold text-white flex items-center space-x-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Full Environment Lock Honored</span>
             </div>
-            <div className="text-[11px] text-ink-muted space-y-1">
+            <div className="text-[11px] text-slate-400 space-y-1 font-mono">
               <div>&bull; Tab Visibility: Retained Throughout</div>
               <div>&bull; Audio Channel: Single Speaker Detected</div>
               <div>&bull; Clipboard: 0 Unauthorized Pastes</div>
@@ -262,31 +277,31 @@ export default function ReportDetailPage() {
         {/* Multi-Agent Breakdown Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Agent 1: Technical Reasoning */}
-          <div className="bg-white border border-border rounded-xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+          <div className="glass-panel border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center space-x-2">
-                <Brain className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-ink">Technical Agent</h3>
+                <Brain className="w-4 h-4 text-indigo-400" />
+                <h3 className="text-sm font-bold text-white">Technical Agent</h3>
               </div>
-              <span className="text-xs font-mono font-bold text-emerald-600">
+              <span className="text-sm font-mono font-bold text-emerald-400">
                 {currentReport.technical?.score || 90}/100
               </span>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <span className="text-[11px] uppercase font-mono text-ink-muted font-semibold">Weight: 50%</span>
-                <p className="text-ink font-medium mt-1">Core Architecture &amp; System Design</p>
+                <span className="text-[10px] uppercase font-mono text-slate-400 font-semibold">Weight: 50%</span>
+                <p className="text-white font-medium mt-1">Core Architecture &amp; System Design</p>
               </div>
-              <div className="bg-emerald-50/50 border border-emerald-100 rounded-lg p-3">
-                <span className="text-[11px] font-semibold text-emerald-800 uppercase font-mono">Key Strength</span>
-                <p className="text-emerald-950 mt-0.5 leading-relaxed">
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5">
+                <span className="text-[10px] font-semibold text-emerald-400 uppercase font-mono">Key Strength</span>
+                <p className="text-slate-200 mt-1 leading-relaxed">
                   {currentReport.technical?.strength || "Strong modular design principles"}
                 </p>
               </div>
               {currentReport.technical?.missing_knowledge?.length > 0 && (
-                <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-3">
-                  <span className="text-[11px] font-semibold text-amber-800 uppercase font-mono">Areas to Probe</span>
-                  <p className="text-amber-950 mt-0.5 leading-relaxed">
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-amber-400 uppercase font-mono">Areas to Probe</span>
+                  <p className="text-slate-200 mt-1 leading-relaxed">
                     {currentReport.technical.missing_knowledge[0]}
                   </p>
                 </div>
@@ -295,31 +310,31 @@ export default function ReportDetailPage() {
           </div>
 
           {/* Agent 2: Behavioral Ownership */}
-          <div className="bg-white border border-border rounded-xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+          <div className="glass-panel border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center space-x-2">
-                <Users className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-ink">Behavioral Agent</h3>
+                <Users className="w-4 h-4 text-purple-400" />
+                <h3 className="text-sm font-bold text-white">Behavioral Agent</h3>
               </div>
-              <span className="text-xs font-mono font-bold text-emerald-600">
+              <span className="text-sm font-mono font-bold text-emerald-400">
                 {currentReport.behavioral?.score || 85}/100
               </span>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <span className="text-[11px] uppercase font-mono text-ink-muted font-semibold">Weight: 25%</span>
-                <p className="text-ink font-medium mt-1">Ownership &amp; Cross-Functional Alignment</p>
+                <span className="text-[10px] uppercase font-mono text-slate-400 font-semibold">Weight: 25%</span>
+                <p className="text-white font-medium mt-1">Ownership &amp; Cross-Functional Alignment</p>
               </div>
-              <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3">
-                <span className="text-[11px] font-semibold text-blue-800 uppercase font-mono">Leadership Traits</span>
-                <p className="text-blue-950 mt-0.5 leading-relaxed">
+              <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-3.5">
+                <span className="text-[10px] font-semibold text-purple-400 uppercase font-mono">Leadership Traits</span>
+                <p className="text-slate-200 mt-1 leading-relaxed">
                   {currentReport.behavioral?.leadership_strengths?.join(", ") || "Extreme Ownership, Accountability"}
                 </p>
               </div>
               {currentReport.behavioral?.improvement_areas?.length > 0 && (
-                <div className="bg-amber-50/50 border border-amber-100 rounded-lg p-3">
-                  <span className="text-[11px] font-semibold text-amber-800 uppercase font-mono">Growth Opportunity</span>
-                  <p className="text-amber-950 mt-0.5 leading-relaxed">
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-amber-400 uppercase font-mono">Growth Opportunity</span>
+                  <p className="text-slate-200 mt-1 leading-relaxed">
                     {currentReport.behavioral.improvement_areas[0]}
                   </p>
                 </div>
@@ -328,36 +343,36 @@ export default function ReportDetailPage() {
           </div>
 
           {/* Agent 3: Communication Clarity */}
-          <div className="bg-white border border-border rounded-xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+          <div className="glass-panel border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold text-ink">Communication Agent</h3>
+                <MessageSquare className="w-4 h-4 text-cyan-400" />
+                <h3 className="text-sm font-bold text-white">Communication Agent</h3>
               </div>
-              <span className="text-xs font-mono font-bold text-emerald-600">
+              <span className="text-sm font-mono font-bold text-emerald-400">
                 {currentReport.communication?.score || 87}/100
               </span>
             </div>
             <div className="space-y-3 text-xs">
               <div>
-                <span className="text-[11px] uppercase font-mono text-ink-muted font-semibold">Weight: 25%</span>
-                <p className="text-ink font-medium mt-1">Clarity, Brevity, &amp; Precision</p>
+                <span className="text-[10px] uppercase font-mono text-slate-400 font-semibold">Weight: 25%</span>
+                <p className="text-white font-medium mt-1">Clarity, Brevity, &amp; Precision</p>
               </div>
               <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="bg-canvas-subtle border border-border rounded-lg p-2.5">
-                  <span className="text-[10px] font-mono text-ink-muted uppercase">Clarity</span>
-                  <div className="text-base font-bold text-primary font-mono mt-0.5">
+                <div className="bg-black/30 border border-white/10 rounded-xl p-2.5">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase">Clarity</span>
+                  <div className="text-base font-bold text-indigo-400 font-mono mt-0.5">
                     {currentReport.communication?.clarity_score || 88}%
                   </div>
                 </div>
-                <div className="bg-canvas-subtle border border-border rounded-lg p-2.5">
-                  <span className="text-[10px] font-mono text-ink-muted uppercase">Conciseness</span>
-                  <div className="text-base font-bold text-primary font-mono mt-0.5">
+                <div className="bg-black/30 border border-white/10 rounded-xl p-2.5">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase">Conciseness</span>
+                  <div className="text-base font-bold text-cyan-400 font-mono mt-0.5">
                     {currentReport.communication?.conciseness_score || 86}%
                   </div>
                 </div>
               </div>
-              <p className="text-ink-muted text-[11px] leading-relaxed italic">
+              <p className="text-slate-300 text-[11px] leading-relaxed italic">
                 "{currentReport.communication?.summary || 'Clear and structured articulation.'}"
               </p>
             </div>
@@ -365,62 +380,76 @@ export default function ReportDetailPage() {
         </div>
 
         {/* Verbatim Cited Evidence Section */}
-        <div className="bg-white border border-border rounded-xl p-6 shadow-xs space-y-4">
+        <div className="glass-panel border border-white/10 rounded-2xl p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-ink uppercase tracking-wider font-mono">
-              Verbatim Candidate Evidence Citations
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+              <Award className="w-4 h-4 text-indigo-400" />
+              <span>Verbatim Candidate Evidence Citations</span>
             </h3>
-            <span className="text-xs text-ink-muted font-mono">Extracted by Multi-Agent Evaluator</span>
+            <span className="text-xs text-slate-400 font-mono">Extracted by Multi-Agent Consensus</span>
           </div>
 
           <div className="space-y-3 text-xs">
             {currentReport.technical?.evidence?.map((ev, i) => (
-              <div key={`tech-ev-${i}`} className="bg-canvas-subtle border border-border rounded-lg p-4 space-y-1">
+              <div key={`tech-ev-${i}`} className="glass-card rounded-xl p-4 space-y-1.5 border-white/10">
                 <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="font-semibold text-primary">[Technical Architecture Proof]</span>
-                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">Relevance: {ev.relevance}</span>
+                  <span className="font-semibold text-indigo-400">[Technical Architecture Proof]</span>
+                  <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">Relevance: {ev.relevance}</span>
                 </div>
-                <p className="text-ink italic text-xs leading-relaxed pt-1">"{ev.quote}"</p>
+                <p className="text-slate-200 italic text-xs leading-relaxed pt-1">"{ev.quote}"</p>
               </div>
             ))}
 
             {currentReport.behavioral?.evidence?.map((ev, i) => (
-              <div key={`beh-ev-${i}`} className="bg-canvas-subtle border border-border rounded-lg p-4 space-y-1">
+              <div key={`beh-ev-${i}`} className="glass-card rounded-xl p-4 space-y-1.5 border-white/10">
                 <div className="flex items-center justify-between text-[11px] font-mono">
-                  <span className="font-semibold text-primary">[Behavioral Ownership Proof]</span>
-                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-medium">Relevance: {ev.relevance}</span>
+                  <span className="font-semibold text-purple-400">[Behavioral Ownership Proof]</span>
+                  <span className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-medium">Relevance: {ev.relevance}</span>
                 </div>
-                <p className="text-ink italic text-xs leading-relaxed pt-1">"{ev.quote}"</p>
+                <p className="text-slate-200 italic text-xs leading-relaxed pt-1">"{ev.quote}"</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* Full Transcript Accordion */}
-        <div className="bg-white border border-border rounded-xl overflow-hidden shadow-xs">
+        <div className="glass-panel border border-white/10 rounded-2xl overflow-hidden shadow-xl">
           <button 
             onClick={() => setShowFullTranscript(!showFullTranscript)}
-            className="w-full p-4 flex items-center justify-between bg-canvas-subtle/50 hover:bg-canvas-subtle transition-colors text-xs font-semibold text-ink"
+            className="w-full p-4 flex items-center justify-between bg-black/20 hover:bg-black/40 transition-colors text-xs font-semibold text-white cursor-pointer"
           >
             <div className="flex items-center space-x-2">
-              <FileText className="w-4 h-4 text-primary" />
+              <FileText className="w-4 h-4 text-indigo-400" />
               <span>Full Interview Transcript ({currentReport.transcript?.length || 0} Turns)</span>
             </div>
-            <span className="text-primary hover:underline">{showFullTranscript ? 'Hide Transcript' : 'View Full Transcript'}</span>
+            <span className="text-indigo-400 hover:text-indigo-300">{showFullTranscript ? 'Hide Transcript' : 'View Full Transcript'} &rarr;</span>
           </button>
 
-          {showFullTranscript && (
-            <div className="p-6 space-y-4 border-t border-border bg-white text-xs max-h-96 overflow-y-auto font-sans">
-              {currentReport.transcript?.map((turn, idx) => (
-                <div key={idx} className={`p-3 rounded-lg ${turn.speaker === 'AI' ? 'bg-primary-subtle/30 text-ink' : 'bg-canvas-subtle text-ink ml-4 border border-border'}`}>
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider block mb-1 text-primary">
-                    {turn.speaker === 'AI' ? 'Autergo AI Interviewer' : currentReport.candidate_name}
-                  </span>
-                  <p className="leading-relaxed">{turn.text}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <AnimatePresence>
+            {showFullTranscript && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-6 space-y-3 border-t border-white/10 text-xs max-h-96 overflow-y-auto font-sans"
+              >
+                {currentReport.transcript?.map((turn, idx) => (
+                  <div key={idx} className={`p-3 rounded-xl border ${
+                    turn.speaker === 'AI' 
+                      ? 'bg-indigo-500/10 border-indigo-500/20 text-slate-200' 
+                      : 'bg-emerald-500/10 border-emerald-500/20 text-slate-200 ml-4'
+                  }`}>
+                    <span className={`text-[10px] font-mono font-bold uppercase tracking-wider block mb-1 ${
+                      turn.speaker === 'AI' ? 'text-indigo-400' : 'text-emerald-400'
+                    }`}>
+                      {turn.speaker === 'AI' ? 'Autergo Voice AI' : currentReport.candidate_name}
+                    </span>
+                    <p className="leading-relaxed">{turn.text}</p>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </main>
     </div>

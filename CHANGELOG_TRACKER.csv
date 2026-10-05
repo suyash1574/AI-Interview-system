@@ -67,7 +67,11 @@ Date,Version,Feature ID,Description,Files Affected,Status
 2026-10-05,2.9.0,TASK-AUDIT-001,Fixed Candidate model import in evaluation Celery task,workers/tasks/evaluation.py,COMPLETED
 2026-10-05,2.9.0,TASK-AUDIT-002,Enforced cloud-first local-last LLM routing policy with terminal fallback stub,backend/providers/__init__.py;backend/providers/local_llm_adapter.py,COMPLETED
 2026-10-05,2.9.0,TASK-AUDIT-003,Pruned unused OpenRouter and xAI stubs and added ENABLE_HF_CLASSIFIERS config,backend/providers/openrouter.py;backend/providers/xai.py;backend/config.py,COMPLETED
-
+2026-10-05,2.10.0,TASK-UI-001,Modern AI dark-tech glassmorphism design system with glowing ambient lighting and keyframe animations,frontend/tailwind.config.js;frontend/src/index.css,COMPLETED
+2026-10-05,2.10.0,TASK-UI-002,Redesigned VoiceInterviewShell with concentric glowing ripple rings, 24-bar audio visualizer, live stage ribbon, and rich transcript,frontend/src/pages/VoiceInterviewShell.jsx,COMPLETED
+2026-10-05,2.10.0,TASK-UI-003,Overhauled LandingPage with dark-tech hero, animated terminal preview, and glassmorphic feature grid,frontend/src/pages/LandingPage.jsx,COMPLETED
+2026-10-05,2.10.0,TASK-UI-004,Redesigned RecruiterDashboard with glowing KPI cards, live telemetry streams, and glassmorphic tables,frontend/src/pages/RecruiterDashboard.jsx,COMPLETED
+2026-10-05,2.10.0,TASK-UI-005,Overhauled ReportDetailPage with animated score gauges, competency progress bars, and CandidateCheckin equipment check,frontend/src/pages/ReportDetailPage.jsx;frontend/src/pages/CandidateCheckin.jsx;frontend/src/pages/RecruiterLogin.jsx,COMPLETED
 
 
 
