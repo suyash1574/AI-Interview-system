@@ -88,22 +88,10 @@ class LiveKitVoiceAgent:
         # 3. Add to transcript
         self.transcript.append({"speaker": "CANDIDATE", "text": sec_result.sanitized_text})
 
-        # 4. Advance State Machine if not terminal
-        next_states = {
-            InterviewState.INIT: InterviewState.DEVICE_CHECK,
-            InterviewState.DEVICE_CHECK: InterviewState.CONSENT,
-            InterviewState.CONSENT: InterviewState.INTRODUCTION,
-            InterviewState.INTRODUCTION: InterviewState.PROFILE,
-            InterviewState.PROFILE: InterviewState.CORE,
-            InterviewState.CORE: InterviewState.DEEP_DIVE,
-            InterviewState.DEEP_DIVE: InterviewState.VALIDATION,
-            InterviewState.VALIDATION: InterviewState.CLOSING,
-            InterviewState.CLOSING: InterviewState.COMPLETE,
-        }
-        current = self.state_machine.state
-        if current in next_states:
-            target = next_states[current]
-            self.state_machine.transition_to(target, competency=self.competency if target == InterviewState.DEEP_DIVE else None)
+        # 4. Advance State Machine via canonical progression
+        self.state_machine.advance(
+            competency=self.competency if self.state_machine.state == InterviewState.CORE else None
+        )
 
         # 5. LLM: Adaptive Strategy Prompt
         prompt = (
@@ -117,7 +105,15 @@ class LiveKitVoiceAgent:
             f"3. Keep under 40 words. Do NOT say 'As an AI'."
         )
 
-        ai_reply = await self.llm.generate_response(prompt)
+        try:
+            ai_reply = await asyncio.wait_for(
+                self.llm.generate_response(prompt),
+                timeout=2.5
+            )
+        except asyncio.TimeoutError:
+            logger.warning("LLM response timed out in voice hot path, using fallback prompt.")
+            ai_reply = f"Thank you for sharing that. Focusing now on {self.competency}, what key trade-offs did you consider in that approach?"
+
         self.transcript.append({"speaker": "AI", "text": ai_reply})
 
         # 6. TTS: Synthesize sub-100ms voice audio

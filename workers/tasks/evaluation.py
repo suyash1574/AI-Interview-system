@@ -8,6 +8,8 @@ from workers.celery_app import celery_app
 from agents.orchestrator import MultiAgentOrchestrator
 from database.session import AsyncSessionLocal
 from database.models import Interview, Evaluation, AgentRun, Job, User
+from backend.config import settings
+
 
 logger = logging.getLogger(__name__)
 
@@ -89,8 +91,12 @@ async def persist_evaluation_to_db(interview_id: str, result_dict: Dict[str, Any
             events = events_res.scalars().all()
             high_count = sum(1 for e in events if e.severity == "HIGH")
             med_count = sum(1 for e in events if e.severity == "MEDIUM")
-            integrity = max(0.0, round(1.0 - (high_count * 0.15) - (med_count * 0.05), 2))
+            base = getattr(settings, "INTEGRITY_BASE_SCORE", 1.0)
+            high_pen = getattr(settings, "INTEGRITY_HIGH_PENALTY", 0.15)
+            med_pen = getattr(settings, "INTEGRITY_MED_PENALTY", 0.05)
+            integrity = max(0.0, round(base - (high_count * high_pen) - (med_count * med_pen), 2))
             interview.integrity_score = integrity
+
 
             # Query real recruiter email for notification
             recruiter_email = "recruiter@autergo.com"

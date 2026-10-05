@@ -55,5 +55,12 @@ Date,Version,Feature ID,Description,Files Affected,Status
 2026-10-05,2.6.0,TASK-DOCX-001,Native DOCX resume parsing support via XML element extraction,backend/core/services/resume_parser.py;tests/unit/test_resumes.py,COMPLETED
 2026-10-05,2.6.0,TASK-DASH-003,Live calculated KPI cards across all drives and candidates,frontend/src/pages/RecruiterDashboard.jsx,COMPLETED
 2026-10-05,2.6.0,TASK-VOX-007,LiveKit React SDK integration with LiveKitRoom and RoomAudioRenderer,frontend/src/pages/VoiceInterviewShell.jsx;frontend/package.json,COMPLETED
+2026-10-05,2.7.0,TASK-ARCH-001,Consolidated deterministic 9-stage progression map and state machine advance/complete methods,backend/core/engine/state_machine.py;realtime/agent_worker.py;realtime/voice_agent.py;backend/api/v1/realtime.py;tests/unit/test_state_machine.py,COMPLETED
+2026-10-05,2.7.0,TASK-ARCH-002,Async LLM timeout guards (2.5s) on real-time hot path with conversational fallback,backend/api/v1/realtime.py;realtime/agent_worker.py;realtime/voice_agent.py,COMPLETED
+2026-10-05,2.7.0,TASK-ARCH-003,Enhanced LlamaGuardSecurity with extended injection patterns and semantic guardrails,backend/core/engine/security.py,COMPLETED
+2026-10-05,2.7.0,TASK-ARCH-004,Database async engine connection pool tuning and unified RLS tenant context,database/session.py;backend/dependencies/db.py;backend/config.py;tests/unit/test_rls_dependency.py,COMPLETED
+2026-10-05,2.7.0,TASK-ARCH-005,Configurable integrity penalty scoring parameters and Celery task DLQ reliability,backend/config.py;workers/tasks/evaluation.py;workers/celery_app.py,COMPLETED
+2026-10-05,2.7.0,TASK-ARCH-006,Custom Prometheus latency histograms and fail-fast startup configuration validation,backend/main.py,COMPLETED
+
 
 

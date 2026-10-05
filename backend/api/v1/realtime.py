@@ -1,10 +1,12 @@
+import asyncio
 import json
 import logging
 from typing import Dict, List, Optional
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy import select
 
-from backend.core.engine.state_machine import InterviewStateMachine, InterviewState
+from backend.config import settings
+from backend.core.engine.state_machine import InterviewStateMachine, InterviewState, STATE_TRANSITION_MAP
 from backend.core.engine.security import LlamaGuardSecurity
 from backend.providers.groq_adapter import GroqProvider
 from database.session import AsyncSessionLocal
@@ -27,17 +29,9 @@ Instructions:
 4. Do NOT say "As an AI".
 """
 
-NEXT_STATE_MAP = {
-    InterviewState.INIT: InterviewState.DEVICE_CHECK,
-    InterviewState.DEVICE_CHECK: InterviewState.CONSENT,
-    InterviewState.CONSENT: InterviewState.INTRODUCTION,
-    InterviewState.INTRODUCTION: InterviewState.PROFILE,
-    InterviewState.PROFILE: InterviewState.CORE,
-    InterviewState.CORE: InterviewState.DEEP_DIVE,
-    InterviewState.DEEP_DIVE: InterviewState.VALIDATION,
-    InterviewState.VALIDATION: InterviewState.CLOSING,
-    InterviewState.CLOSING: InterviewState.COMPLETE,
-}
+# Alias canonical progression map for backward compatibility
+NEXT_STATE_MAP = STATE_TRANSITION_MAP
+
 
 # Active session registries in-memory + Redis backing
 class RealtimeSessionContext:
@@ -96,6 +90,19 @@ async def load_session_from_redis(session_id: str, ctx: RealtimeSessionContext):
                         break
     except Exception as e:
         logger.debug(f"Redis session restore fallback: {e}")
+
+async def cleanup_session_in_redis(session_id: str, immediate: bool = False):
+    """Cleans up Redis session state on disconnect or marks with TTL."""
+    try:
+        import redis.asyncio as aioredis
+        client = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
+        if immediate:
+            await client.delete(f"autergo:session:{session_id}")
+        else:
+            await client.expire(f"autergo:session:{session_id}", 3600)
+        await client.aclose()
+    except Exception as e:
+        logger.debug(f"Redis session cleanup notice: {e}")
 
 @router.websocket("/interview/{session_id}")
 async def realtime_interview_ws(
@@ -211,14 +218,10 @@ async def realtime_interview_ws(
                 })
 
                 # Deterministically step state machine if not complete
-                current = ctx.state_machine.state
-                if current in NEXT_STATE_MAP:
-                    target_state = NEXT_STATE_MAP[current]
-                    ctx.state_machine.transition_to(
-                        target_state,
-                        competency=ctx.competency if target_state == InterviewState.DEEP_DIVE else None
-                    )
-                    await websocket.send_json(ctx.state_machine.build_state_change_event())
+                ctx.state_machine.advance(
+                    competency=ctx.competency if ctx.state_machine.state == InterviewState.CORE else None
+                )
+                await websocket.send_json(ctx.state_machine.build_state_change_event())
 
                 # Generate AI response using dynamically injected strategy prompt
                 prompt = PROMPT_TEMPLATE.format(
@@ -230,7 +233,14 @@ async def realtime_interview_ws(
                     candidate_response=sec_check.sanitized_text,
                 )
 
-                ai_reply = await ctx.llm.generate_response(prompt)
+                try:
+                    ai_reply = await asyncio.wait_for(
+                        ctx.llm.generate_response(prompt),
+                        timeout=2.5
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning(f"LLM generation timed out in WebSocket interview {session_id}")
+                    ai_reply = f"Thank you for sharing that. Moving into our discussion on {ctx.competency}, could you dive deeper into your technical approach?"
 
                 if not ctx.is_interrupted:
                     ctx.transcript.append({"speaker": "AI", "text": ai_reply})
@@ -245,12 +255,9 @@ async def realtime_interview_ws(
 
             # 3. Handle Complete / Finish
             elif msg_type == "finish":
-                if not ctx.state_machine.is_terminal():
-                    while ctx.state_machine.state != InterviewState.COMPLETE:
-                        next_state = NEXT_STATE_MAP.get(ctx.state_machine.state, InterviewState.COMPLETE)
-                        ctx.state_machine.transition_to(next_state)
-
+                ctx.state_machine.complete_all()
                 await save_session_to_redis(session_id, ctx)
+                await cleanup_session_in_redis(session_id, immediate=True)
 
                 # Persist final transcript to DB & trigger evaluation
                 if ctx.interview_id:
@@ -296,3 +303,4 @@ async def realtime_interview_ws(
         logger.info(f"Client disconnected from session {session_id}")
     finally:
         active_sessions.pop(session_id, None)
+        await cleanup_session_in_redis(session_id, immediate=False)

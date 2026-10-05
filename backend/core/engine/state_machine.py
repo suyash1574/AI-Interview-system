@@ -49,6 +49,19 @@ _VALID_TRANSITIONS: dict[InterviewState, frozenset[InterviewState]] = {
     InterviewState.COMPLETE: frozenset(),  # terminal state
 }
 
+# Canonical linear progression map (single source of truth for the system)
+STATE_TRANSITION_MAP: dict[InterviewState, InterviewState] = {
+    InterviewState.INIT: InterviewState.DEVICE_CHECK,
+    InterviewState.DEVICE_CHECK: InterviewState.CONSENT,
+    InterviewState.CONSENT: InterviewState.INTRODUCTION,
+    InterviewState.INTRODUCTION: InterviewState.PROFILE,
+    InterviewState.PROFILE: InterviewState.CORE,
+    InterviewState.CORE: InterviewState.DEEP_DIVE,
+    InterviewState.DEEP_DIVE: InterviewState.VALIDATION,
+    InterviewState.VALIDATION: InterviewState.CLOSING,
+    InterviewState.CLOSING: InterviewState.COMPLETE,
+}
+
 
 class InterviewStateMachine:
     """
@@ -144,6 +157,27 @@ class InterviewStateMachine:
                 "competency": competency,
             },
         )
+
+    def advance(self, competency: Optional[str] = None) -> InterviewState:
+        """
+        Advance to the next sequential stage according to STATE_TRANSITION_MAP.
+        If already terminal (COMPLETE), does nothing and returns COMPLETE.
+        """
+        if self.is_terminal():
+            return self._state
+        target = STATE_TRANSITION_MAP.get(self._state)
+        if target:
+            self.transition_to(target, competency=competency)
+        return self._state
+
+    def complete_all(self) -> None:
+        """
+        Rapidly advances through all remaining states until reaching COMPLETE.
+        Used when an interview session finishes early or completes normally.
+        """
+        while not self.is_terminal():
+            target = STATE_TRANSITION_MAP.get(self._state, InterviewState.COMPLETE)
+            self.transition_to(target)
 
     def is_terminal(self) -> bool:
         """Return True if the interview has reached its terminal COMPLETE state."""

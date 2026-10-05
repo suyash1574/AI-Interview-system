@@ -365,3 +365,55 @@ class TestInterviewStateEnum:
     def test_state_values_are_strings(self):
         for state in InterviewState:
             assert isinstance(state.value, str)
+
+
+# ---------------------------------------------------------------------------
+# advance() and complete_all() canonical progression tests
+# ---------------------------------------------------------------------------
+
+class TestAdvanceAndCompleteAll:
+    def test_advance_steps_through_all_states(self):
+        sm = InterviewStateMachine(interview_id="adv-001")
+        expected_sequence = [
+            InterviewState.DEVICE_CHECK,
+            InterviewState.CONSENT,
+            InterviewState.INTRODUCTION,
+            InterviewState.PROFILE,
+            InterviewState.CORE,
+            InterviewState.DEEP_DIVE,
+            InterviewState.VALIDATION,
+            InterviewState.CLOSING,
+            InterviewState.COMPLETE,
+        ]
+        for expected in expected_sequence:
+            next_state = sm.advance()
+            assert next_state == expected
+            assert sm.state == expected
+
+        # Calling advance on terminal returns COMPLETE without error
+        assert sm.advance() == InterviewState.COMPLETE
+        assert sm.is_terminal() is True
+
+    def test_advance_with_competency_on_deep_dive(self):
+        sm = InterviewStateMachine(interview_id="adv-comp")
+        sm.transition_to(InterviewState.DEVICE_CHECK)
+        sm.transition_to(InterviewState.CONSENT)
+        sm.transition_to(InterviewState.INTRODUCTION)
+        sm.transition_to(InterviewState.PROFILE)
+        sm.transition_to(InterviewState.CORE)
+        sm.advance(competency="Distributed Systems")
+        assert sm.state == InterviewState.DEEP_DIVE
+        assert sm.active_competency == "Distributed Systems"
+
+    def test_complete_all_from_init(self):
+        sm = InterviewStateMachine(interview_id="finish-001")
+        assert not sm.is_terminal()
+        sm.complete_all()
+        assert sm.state == InterviewState.COMPLETE
+        assert sm.is_terminal() is True
+
+    def test_complete_all_idempotent_when_already_complete(self):
+        sm = make_sm(InterviewState.COMPLETE)
+        sm.complete_all()
+        assert sm.state == InterviewState.COMPLETE
+

@@ -51,6 +51,18 @@ class Settings(BaseSettings):
     R2_BUCKET_NAME: str = "autergo-storage"
     R2_PUBLIC_URL: str = "https://storage.autergo.com"
 
+    # Database Connection Pool Tuning
+    DB_POOL_SIZE: int = 20
+    DB_MAX_OVERFLOW: int = 10
+    DB_POOL_RECYCLE: int = 3600
+    DB_POOL_PRE_PING: bool = True
+    DB_ECHO: bool = False
+
+    # Configurable Integrity Scoring Calibration
+    INTEGRITY_BASE_SCORE: float = 1.0
+    INTEGRITY_HIGH_PENALTY: float = 0.15
+    INTEGRITY_MED_PENALTY: float = 0.05
+
     class Config:
         env_file = ".env"
         extra = "ignore"

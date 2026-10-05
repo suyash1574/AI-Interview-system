@@ -89,25 +89,10 @@ class LiveKitAgentWorker:
 
         self.transcript.append({"speaker": "CANDIDATE", "text": sec_check.sanitized_text})
 
-        # Advance state machine
-        next_states = {
-            InterviewState.INIT: InterviewState.DEVICE_CHECK,
-            InterviewState.DEVICE_CHECK: InterviewState.CONSENT,
-            InterviewState.CONSENT: InterviewState.INTRODUCTION,
-            InterviewState.INTRODUCTION: InterviewState.PROFILE,
-            InterviewState.PROFILE: InterviewState.CORE,
-            InterviewState.CORE: InterviewState.DEEP_DIVE,
-            InterviewState.DEEP_DIVE: InterviewState.VALIDATION,
-            InterviewState.VALIDATION: InterviewState.CLOSING,
-            InterviewState.CLOSING: InterviewState.COMPLETE,
-        }
-        current = self.state_machine.state
-        if current in next_states:
-            target = next_states[current]
-            self.state_machine.transition_to(
-                target,
-                competency=self.competencies[0] if target == InterviewState.DEEP_DIVE else None
-            )
+        # Advance state machine via canonical progression
+        self.state_machine.advance(
+            competency=self.competencies[0] if self.state_machine.state == InterviewState.CORE else None
+        )
 
         # Dynamic LLM Prompt with Resume & Job Context
         prompt = (
@@ -124,7 +109,15 @@ class LiveKitAgentWorker:
             f"3. Keep response under 35 words. Do NOT include greetings or AI disclaimers."
         )
 
-        ai_response = await self.llm.generate_response(prompt)
+        try:
+            ai_response = await asyncio.wait_for(
+                self.llm.generate_response(prompt),
+                timeout=2.5
+            )
+        except asyncio.TimeoutError:
+            logger.warning("LLM response timed out in hot path, providing dynamic fallback prompt.")
+            ai_response = f"Understood. Moving forward to our assessment on {self.competencies[0] if self.competencies else 'architecture'}, can you walk me through your system design trade-offs?"
+
         self.transcript.append({"speaker": "AI", "text": ai_response})
 
         return {
@@ -136,21 +129,7 @@ class LiveKitAgentWorker:
 
     async def complete_session(self) -> Dict[str, Any]:
         """Finalizes interview, updates status, and initiates post-interview evaluation task."""
-        if not self.state_machine.is_terminal():
-            next_state_map = {
-                InterviewState.INIT: InterviewState.DEVICE_CHECK,
-                InterviewState.DEVICE_CHECK: InterviewState.CONSENT,
-                InterviewState.CONSENT: InterviewState.INTRODUCTION,
-                InterviewState.INTRODUCTION: InterviewState.PROFILE,
-                InterviewState.PROFILE: InterviewState.CORE,
-                InterviewState.CORE: InterviewState.DEEP_DIVE,
-                InterviewState.DEEP_DIVE: InterviewState.VALIDATION,
-                InterviewState.VALIDATION: InterviewState.CLOSING,
-                InterviewState.CLOSING: InterviewState.COMPLETE,
-            }
-            while self.state_machine.state != InterviewState.COMPLETE:
-                nxt = next_state_map.get(self.state_machine.state, InterviewState.COMPLETE)
-                self.state_machine.transition_to(nxt)
+        self.state_machine.complete_all()
 
         logger.info(f"Interview {self.interview_id} completed with {len(self.transcript)} turns.")
 
