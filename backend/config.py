@@ -73,10 +73,12 @@ class Settings(BaseSettings):
     LOCAL_MODEL_USE_MMAP: bool = True
 
     # Classification & Security Model Configuration
+    ENABLE_HF_CLASSIFIERS: bool = False
     CLASSIFICATION_DEVICE: str = "cpu"
     PROMPT_INJECTION_MODEL: str = "microsoft/deberta-v3-base-prompt-injection"
     PII_DETECTION_MODEL: str = "obi/deid_roberta_i2b2"
     TOPIC_CLASSIFICATION_MODEL: str = "facebook/bart-large-mnli"
+
 
 
     class Config:

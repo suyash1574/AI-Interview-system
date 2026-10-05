@@ -7,8 +7,9 @@ from sqlalchemy import select
 from workers.celery_app import celery_app
 from agents.orchestrator import MultiAgentOrchestrator
 from database.session import AsyncSessionLocal
-from database.models import Interview, Evaluation, AgentRun, Job, User
+from database.models import Interview, Evaluation, AgentRun, Job, User, Candidate
 from backend.config import settings
+
 
 
 logger = logging.getLogger(__name__)

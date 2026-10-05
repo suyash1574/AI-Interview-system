@@ -64,6 +64,10 @@ Date,Version,Feature ID,Description,Files Affected,Status
 2026-10-05,2.8.0,TASK-LOCAL-001,Local LLM GGUF provider using llama-cpp-python for Qwen 2.5 Coder 1.5B,backend/providers/local_llm_adapter.py;backend/providers/__init__.py;backend/config.py;requirements.txt;tests/unit/test_local_llm.py,COMPLETED
 2026-10-05,2.8.0,TASK-LOCAL-002,Offline ClassificationProvider for PII masking and zero-shot competency routing,backend/providers/classification_adapter.py;backend/core/engine/security.py;tests/unit/test_classification.py,COMPLETED
 2026-10-05,2.8.0,TASK-LOCAL-003,Unified get_llm_provider factory with auto local GGUF discovery and hybrid failover,backend/providers/__init__.py;realtime/agent_worker.py;realtime/voice_agent.py,COMPLETED
+2026-10-05,2.9.0,TASK-AUDIT-001,Fixed Candidate model import in evaluation Celery task,workers/tasks/evaluation.py,COMPLETED
+2026-10-05,2.9.0,TASK-AUDIT-002,Enforced cloud-first local-last LLM routing policy with terminal fallback stub,backend/providers/__init__.py;backend/providers/local_llm_adapter.py,COMPLETED
+2026-10-05,2.9.0,TASK-AUDIT-003,Pruned unused OpenRouter and xAI stubs and added ENABLE_HF_CLASSIFIERS config,backend/providers/openrouter.py;backend/providers/xai.py;backend/config.py,COMPLETED
+
 
 
 

@@ -9,11 +9,17 @@ logger = logging.getLogger(__name__)
 
 class ClassificationProvider:
     """
-    Hugging Face Classification Provider.
+    Hugging Face Classification Provider — LOCAL WEIGHTS ONLY, NO HF INFERENCE API.
+    Loads open-weights models directly via `transformers.pipeline` from local
+    HF Hub cache (snapshot_download), never POSTs to api-inference.huggingface.co.
     Provides offline/local semantic classification for:
-    - Prompt Injection Detection
-    - PII (Personally Identifiable Information) Detection and Masking
-    - Zero-Shot Competency / Topic Classification
+    - Prompt Injection Detection (microsoft/deberta-v3-base-prompt-injection)
+    - PII Detection: regex fast-path only (ponytail: NER model weight listed in
+      config but intentionally NOT loaded — regex covers email/phone/credential
+      at zero cost with no 500MB download; full NER only if compliance demands it)
+    - Zero-Shot Competency / Topic Classification (facebook/bart-large-mnli)
+    ponytail: transformers pipeline + regex fallback keeps this zero-cost and
+    offline-capable; no network call, no HF token required.
     """
 
     _instance: Optional["ClassificationProvider"] = None

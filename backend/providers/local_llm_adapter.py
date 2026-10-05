@@ -100,8 +100,6 @@ class LocalLLMProvider(ILLMProvider):
         try:
             return await loop.run_in_executor(None, _infer)
         except Exception as e:
-            logger.warning(f"Local LLM inference failed ({e}). Falling back to secondary provider.")
-            # Fallback to Groq or heuristic
-            from backend.providers.groq_adapter import GroqProvider
-            fallback = GroqProvider()
-            return await fallback.generate_response(prompt)
+            logger.warning(f"Local LLM inference failed ({e}). Local is last resort, returning stub.")
+            # ponytail: local is terminal fallback — no further chain, return stub instead of looping to Groq.
+            return "Thank you for explaining that. Could you elaborate on the key trade-off in that design?"
