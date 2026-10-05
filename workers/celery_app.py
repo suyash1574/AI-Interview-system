@@ -35,9 +35,13 @@ celery_app.conf.update(
     task_default_queue="default",
     task_default_exchange="default",
     task_default_routing_key="default",
+    broker_connection_retry_on_startup=False,
+    broker_connection_max_retries=1,
+    result_backend_transport_options={"max_retries": 1, "interval_start": 0, "interval_step": 0.1, "interval_max": 0.2},
     task_queues=(
         Queue("default", default_exchange, routing_key="default"),
         Queue("dead_letter", dlx_exchange, routing_key="dead_letter"),
     ),
 )
+
 

@@ -194,10 +194,11 @@ async def realtime_interview_ws(
                 })
                 continue
 
-            # 2. Handle Candidate Answer
-            elif msg_type == "candidate_answer":
+            # 2. Handle Candidate Answer / Transcript
+            elif msg_type in ["candidate_answer", "transcript", "user_speech"]:
                 ctx.is_interrupted = False
                 candidate_text = message.get("text", "").strip()
+
 
                 # Safety check via LlamaGuardSecurity
                 sec_check = await ctx.security.validate_input(candidate_text)
